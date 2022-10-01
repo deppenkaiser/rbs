@@ -1,41 +1,7 @@
 
-#include <stdint.h>
-#include <vector>
 #include <iostream>
 
-enum class Token
-{
-    A,
-    B,
-    C
-};
-
-enum class Operators
-{
-    OR,
-    NOT
-};
-
-typedef std::vector<Token> Facts;
-typedef std::vector<Token> Expression;
-typedef std::vector<Expression> Rule;
-typedef std::vector<Rule> Rules;
-
-bool inFacts(const Facts& facts, const Token& requestedToken)
-{
-    bool bRetVal = false;
-
-    for (const Token& fact : facts)
-    {
-        if (requestedToken == fact)
-        {
-            bRetVal = true;
-            break;
-        }
-    }
-
-    return bRetVal;
-}
+#include "functions.h"
 
 int main()
 {
@@ -49,37 +15,16 @@ int main()
 
     while (true)
     {
-        bool bRuleFulfilled = false;
         for (const Rule& rule : rules)
         {
-            uint32_t nTokenCount = 0;
-            for (const Expression& expression : rule)
+            if (isRuleInFacts(facts, rule))
             {
-                for (const Token& token : expression)
-                {
-                    if (inFacts(facts, token))
-                    {
-                        nTokenCount++;
-                    }
-
-                    if (nTokenCount == expression.size())
-                    {
-                        bRuleFulfilled = true;
-                        break;
-                    }
-                }
-
-                nTokenCount = 0;
+                std::cout << "Hit!" << std::endl;
             }
-        }
-
-        if (bRuleFulfilled)
-        {
-            std::cout << "Hit!" << std::endl;
-        }
-        else
-        {
-            std::cout << "Miss!" << std::endl;
+            else
+            {
+                std::cout << "Miss!" << std::endl;
+            }
         }
     }
 
