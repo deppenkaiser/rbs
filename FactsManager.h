@@ -9,12 +9,12 @@ class FactsManager
 
 	private:
 		bool isTokenTrue(const Token& token);
-		bool isTokenInFacts(const Token& requestedToken);
-		bool isTokenNotInFacts(const Token& requestedToken);
+		bool isTokenInFacts(const Token& token);
+		bool isTokenNotInFacts(const Token& token);
 		bool isRuleInFacts(const Rule& rule);
-		void addToken(const Token& requestedToken);
+		void addToken(const Token& token);
 		void updateFacts(const Token& token);
-		void removeToken(const Token& requestedToken);
+		void removeToken(const Token& token);
 	
 	public:
 		FactsManager();
