@@ -2,6 +2,9 @@
 
 #include <stdint.h>
 
+bool isTokenInFacts(const Facts& facts, const Token& requestedToken);
+bool isTokenNotInFacts(const Facts& facts, const Token& requestedToken);
+
 bool isTokenInFacts(const Facts& facts, const Token& requestedToken)
 {
     bool bRetVal = false;
@@ -18,6 +21,23 @@ bool isTokenInFacts(const Facts& facts, const Token& requestedToken)
     return bRetVal;
 }
 
+bool isTokenNotInFacts(const Facts& facts, const Token& requestedToken)
+{
+    return isTokenInFacts(facts, static_cast<Token>(requestedToken + 1)) == false;
+}
+
+void removeTokenFromFacts(Facts* pFacts, const Token& requestedToken)
+{
+    for (Facts::iterator it = pFacts->begin(); it != pFacts->end(); ++it)
+    {
+        if (*it == static_cast<Token>(requestedToken + 1))
+        {
+            pFacts->erase(it);
+            break;
+        }
+    }
+}
+
 bool isRuleInFacts(const Facts& facts, const Rule& rule)
 {
     bool bRetVal = false;
@@ -27,9 +47,19 @@ bool isRuleInFacts(const Facts& facts, const Rule& rule)
     {
         for (const Token& token : expression)
         {
-            if (isTokenInFacts(facts, token))
+            if (token % 2)
             {
-                nTokenCount++;
+                if (isTokenInFacts(facts, token))
+                {
+                    nTokenCount++;
+                }
+            }
+            else
+            {
+                if (isTokenNotInFacts(facts, token))
+                {
+                    nTokenCount++;
+                }
             }
 
             if (nTokenCount == expression.size())
