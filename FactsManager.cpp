@@ -30,9 +30,9 @@ bool FactsManager::isTokenInFacts(const Token& requestedToken)
     return bRetVal;
 }
 
-bool FactsManager::isTokenNotInFacts(const Token& requestedToken)
+bool FactsManager::isTokenNotInFacts(const Token& token)
 {
-    return isTokenInFacts(static_cast<Token>(requestedToken + 1)) == false;
+    return isTokenInFacts(static_cast<Token>(token + 1)) == false;
 }
 
 void FactsManager::updateFacts(const Token& token)
@@ -47,11 +47,11 @@ void FactsManager::updateFacts(const Token& token)
     }
 }
 
-void FactsManager::removeToken(const Token& requestedToken)
+void FactsManager::removeToken(const Token& token)
 {
     for (Facts::iterator it = m_pFacts->begin(); it != m_pFacts->end(); ++it)
     {
-        if (*it == static_cast<Token>(requestedToken + 1))
+        if (*it == static_cast<Token>(token + 1))
         {
             m_pFacts->erase(it);
             break;
@@ -96,11 +96,11 @@ bool FactsManager::isRuleInFacts(const Rule& rule)
     return bRetVal;
 }
 
-void FactsManager::addToken(const Token& requestedToken)
+void FactsManager::addToken(const Token& token)
 {
-    if (isTokenInFacts(requestedToken) == false)
+    if (isTokenInFacts(token) == false)
     {
-        m_pFacts->push_back(requestedToken);
+        m_pFacts->push_back(token);
     }
 }
 
