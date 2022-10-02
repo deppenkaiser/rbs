@@ -82,3 +82,29 @@ bool isRuleInFacts(const Facts& facts, const Rule& rule)
 
     return bRetVal;
 }
+
+bool executeProgram(const Actions& actions, Facts* pFacts)
+{
+    bool bLoopAgain = false;
+    for (const Action& action : actions)
+    {
+        if (isRuleInFacts(*pFacts, action.rule))
+        {
+            for (const Token& token : action.output)
+            {
+                if (token % 2)
+                {
+                    addToken(pFacts, token);
+                }
+                else
+                {
+                    removeToken(pFacts, token);
+                }
+            }
+
+            bLoopAgain = true;
+        }
+    }
+
+    return bLoopAgain;
+}
