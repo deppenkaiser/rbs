@@ -17,6 +17,7 @@ bool FactsManager::isTokenTrue(const Token& token)
 bool FactsManager::isTokenInFacts(const Token& requestedToken)
 {
     bool bRetVal = false;
+	std::lock_guard<std::recursive_mutex> cs(m_factsMutex);
 
     for (const Token& fact : *m_pFacts)
     {
@@ -49,6 +50,8 @@ void FactsManager::updateFacts(const Token& token)
 
 void FactsManager::removeToken(const Token& token)
 {
+	std::lock_guard<std::recursive_mutex> cs(m_factsMutex);
+
     for (Facts::iterator it = m_pFacts->begin(); it != m_pFacts->end(); ++it)
     {
         if (*it == static_cast<Token>(token + 1))
@@ -100,6 +103,7 @@ void FactsManager::addToken(const Token& token)
 {
     if (isTokenInFacts(token) == false)
     {
+		std::lock_guard<std::recursive_mutex> cs(m_factsMutex);
         m_pFacts->push_back(token);
     }
 }
