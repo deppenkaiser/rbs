@@ -2,13 +2,10 @@
 
 #include "typedefs.h"
 
-#include <mutex>
-
 class FactsManager
 {
 	private:
 		Facts* m_pFacts = nullptr;
-		std::recursive_mutex m_factsMutex;
 
 	private:
 		bool isTokenTrue(const Token& token);
