@@ -2,9 +2,8 @@
 
 #include <stdint.h>
 
-FactsManager::FactsManager(Facts* pFacts)
+FactsManager::FactsManager()
 {
-	m_pFacts = pFacts;
 }
 
 FactsManager::~FactsManager()
@@ -20,7 +19,7 @@ bool FactsManager::isTokenInFacts(const Token& requestedToken)
 {
     bool bRetVal = false;
 
-    for (const Token& fact : *m_pFacts)
+    for (const Token& fact : m_facts)
     {
         if (requestedToken == fact)
         {
@@ -51,11 +50,11 @@ void FactsManager::updateFacts(const Token& token)
 
 void FactsManager::removeToken(const Token& token)
 {
-    for (Facts::iterator it = m_pFacts->begin(); it != m_pFacts->end(); ++it)
+    for (Facts::iterator it = m_facts.begin(); it != m_facts.end(); ++it)
     {
         if (*it == static_cast<Token>(token + 1))
         {
-            m_pFacts->erase(it);
+            m_facts.erase(it);
             break;
         }
     }
@@ -102,7 +101,7 @@ void FactsManager::addToken(const Token& token)
 {
     if (isTokenInFacts(token) == false)
     {
-        m_pFacts->push_back(token);
+        m_facts.push_back(token);
     }
 }
 

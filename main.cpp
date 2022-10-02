@@ -3,9 +3,8 @@
 
 int main()
 {
-    Facts facts;
     Actions actions;
-    FactsManager fm(&facts);
+    FactsManager fm;
 
     actions.push_back({Rule({Expression({Token::NA})}), Expression({Token::B})});
     actions.push_back({Rule({Expression({Token::B})}), Expression({Token::A, Token::NB})});
