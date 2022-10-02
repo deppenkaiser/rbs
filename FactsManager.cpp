@@ -10,20 +10,43 @@ FactsManager::~FactsManager()
 {
 }
 
+void FactsManager::setValue(const Token& token, uint32_t uValue)
+{
+    m_values[token].eType = ValueType::U_INTEGER;
+    m_values[token].value.uValue = uValue;
+}
+
+void FactsManager::setValue(const Token& token, int32_t iValue)
+{
+    m_values[token].eType = ValueType::I_INTEGER;
+    m_values[token].value.uValue = iValue;
+}
+
+void FactsManager::setValue(const Token& token, float fValue)
+{
+    m_values[token].eType = ValueType::FLOAT;
+    m_values[token].value.uValue = fValue;
+}
+
 bool FactsManager::isTokenTrue(const Token& token)
 {
     return (token % 2) == 1;
 }
 
-bool FactsManager::isTokenInFacts(const Token& requestedToken)
+bool FactsManager::isTokenInFacts(const Token& token, bool bInput)
 {
     bool bRetVal = false;
 
     for (const Token& fact : m_facts)
     {
-        if (requestedToken == fact)
+        if (token == fact)
         {
             bRetVal = true;
+
+            if ((m_values.find(token) != m_values.end()) && bInput)
+            {
+                bRetVal = calculateTokenValue(token, &m_values[token]);
+            }            
             break;
         }
     }
@@ -31,9 +54,9 @@ bool FactsManager::isTokenInFacts(const Token& requestedToken)
     return bRetVal;
 }
 
-bool FactsManager::isTokenNotInFacts(const Token& token)
+bool FactsManager::isTokenNotInFacts(const Token& token, bool bInput)
 {
-    return isTokenInFacts(static_cast<Token>(token + 1)) == false;
+    return isTokenInFacts(static_cast<Token>(token + 1), bInput) == false;
 }
 
 void FactsManager::updateFacts(const Token& token)
@@ -71,14 +94,14 @@ bool FactsManager::isRuleInFacts(const Rule& rule)
         {
             if (isTokenTrue(token))
             {
-                if (isTokenInFacts(token))
+                if (isTokenInFacts(token, true))
                 {
                     ++nTokenCount;
                 }
             }
             else
             {
-                if (isTokenNotInFacts(token))
+                if (isTokenNotInFacts(token, true))
                 {
                     ++nTokenCount;
                 }
@@ -99,7 +122,7 @@ bool FactsManager::isRuleInFacts(const Rule& rule)
 
 void FactsManager::addToken(const Token& token)
 {
-    if (isTokenInFacts(token) == false)
+    if (isTokenInFacts(token, false) == false)
     {
         m_facts.push_back(token);
     }
@@ -122,4 +145,21 @@ bool FactsManager::executeProgram(const Actions& actions)
     }
 
     return bLoopAgain;
+}
+
+bool FactsManager::calculateTokenValue(const Token& token, TokenValue* pTokenValue)
+{
+    bool bRetVal = true;
+
+    switch (token)
+    {
+        case Token::B:
+            bRetVal = pTokenValue->value.uValue > 20;
+            break;
+
+        default:
+            break;
+    }
+
+    return bRetVal;
 }
