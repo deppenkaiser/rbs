@@ -5,7 +5,7 @@
 class FactsManager
 {
 	private:
-		Facts* m_pFacts = nullptr;
+	    Facts m_facts;
 
 	private:
 		bool isTokenTrue(const Token& token);
@@ -17,7 +17,7 @@ class FactsManager
 		void removeToken(const Token& requestedToken);
 	
 	public:
-		FactsManager(Facts* pFacts);
+		FactsManager();
 		~FactsManager();
 		bool executeProgram(const Actions& actions);
 };
