@@ -1,17 +1,16 @@
 
-#include <iostream>
-
-#include "functions.h"
+#include "FactsManager.h"
 
 int main()
 {
     Facts facts;
     Actions actions;
+    FactsManager fm(&facts);
 
     actions.push_back({Rule({Expression({Token::NA})}), Expression({Token::B})});
     actions.push_back({Rule({Expression({Token::B})}), Expression({Token::A, Token::NB})});
 
-    while(executeProgram(actions, &facts));
+    while(fm.executeProgram(actions));
 
     return 0;
 }
