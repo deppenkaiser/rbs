@@ -26,7 +26,15 @@ bool isTokenNotInFacts(const Facts& facts, const Token& requestedToken)
     return isTokenInFacts(facts, static_cast<Token>(requestedToken + 1)) == false;
 }
 
-void removeTokenFromFacts(Facts* pFacts, const Token& requestedToken)
+void addToken(Facts* pFacts, const Token& requestedToken)
+{
+    if (isTokenInFacts(*pFacts, requestedToken) == false)
+    {
+        pFacts->push_back(requestedToken);
+    }
+}
+
+void removeToken(Facts* pFacts, const Token& requestedToken)
 {
     for (Facts::iterator it = pFacts->begin(); it != pFacts->end(); ++it)
     {

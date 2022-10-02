@@ -3,4 +3,5 @@
 #include "typedefs.h"
 
 bool isRuleInFacts(const Facts& facts, const Rule& rule);
-void removeTokenFromFacts(Facts* pFacts, const Token& requestedToken);
+void addToken(Facts* pFacts, const Token& requestedToken);
+void removeToken(Facts* pFacts, const Token& requestedToken);
