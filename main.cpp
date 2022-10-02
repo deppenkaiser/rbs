@@ -8,10 +8,10 @@ int main()
     Facts facts;
     Actions actions;
 
-    facts.push_back(Token::B);
-
+    actions.push_back({Rule({Expression({Token::NB})}), Expression({Token::B})});
     actions.push_back({Rule({Expression({Token::B})}), Expression({Token::C})});
     actions.push_back({Rule({Expression({Token::C})}), Expression({Token::A, Token::NB, Token::NC})});
+    actions.push_back({Rule({Expression({Token::A})}), Expression({Token::NA})});
 
     while (true)
     {
@@ -27,13 +27,7 @@ int main()
                     }
                     else
                     {
-                        for (Facts::iterator it = facts.begin(); it != facts.end(); ++it)
-                        {
-                            if (*it == static_cast<Token>(token + 1))
-                            {
-                                facts.erase(it);
-                            }
-                        }
+                        removeTokenFromFacts(&facts, token);
                     }
                 }
             }
