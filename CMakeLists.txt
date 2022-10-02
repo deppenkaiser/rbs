@@ -5,6 +5,6 @@ project(rbs LANGUAGES CXX)
 add_executable(rbs)
 
 target_sources(rbs PRIVATE
-    functions.cpp
+    FactsManager.cpp
     main.cpp
 )
