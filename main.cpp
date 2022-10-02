@@ -8,13 +8,13 @@ int main()
     Facts facts;
     Actions actions;
 
-    actions.push_back({Rule({Expression({Token::NB})}), Expression({Token::B})});
-    actions.push_back({Rule({Expression({Token::B})}), Expression({Token::C})});
-    actions.push_back({Rule({Expression({Token::C})}), Expression({Token::A, Token::NB, Token::NC})});
-    actions.push_back({Rule({Expression({Token::A})}), Expression({Token::NA})});
+    actions.push_back({Rule({Expression({Token::NA})}), Expression({Token::B})});
+    actions.push_back({Rule({Expression({Token::B})}), Expression({Token::A, Token::NB})});
 
-    while (true)
+    bool bLoopAgain = false;
+    do
     {
+        bLoopAgain = false;
         for (const Action& action : actions)
         {
             if (isRuleInFacts(facts, action.rule))
@@ -23,16 +23,18 @@ int main()
                 {
                     if (token % 2)
                     {
-                        facts.push_back(token);
+                        addToken(&facts, token);
                     }
                     else
                     {
-                        removeTokenFromFacts(&facts, token);
+                        removeToken(&facts, token);
                     }
                 }
+
+                bLoopAgain = true;
             }
         }
-    }
+    } while(bLoopAgain);
 
     return 0;
 }
