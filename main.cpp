@@ -1,23 +1,21 @@
 
-#include "FactsManager.h"
+#include "SM.h"
 
 int main()
 {
-    enum SweenBob
+    SM::Actions actions;
+    SM sm;
+
+    sm.setValue(SweenBob::B, 100);
+
+    actions.push_back({SM::Rule({SM::Expression({SweenBob::NA})}), SM::Expression({SweenBob::B})});
+    actions.push_back({SM::Rule({SM::Expression({SweenBob::B})}), SM::Expression({SweenBob::A, SweenBob::NB})});
+
+    bool bLoop = false;
+    do
     {
-        NA, A,
-        NB, B
-    };
-
-    FactsManager<SweenBob>::Actions actions;
-    FactsManager<SweenBob> fm;
-
-    fm.setValue(SweenBob::B, 100);
-
-    actions.push_back({FactsManager<SweenBob>::Rule({FactsManager<SweenBob>::Expression({SweenBob::NA})}), FactsManager<SweenBob>::Expression({SweenBob::B})});
-    actions.push_back({FactsManager<SweenBob>::Rule({FactsManager<SweenBob>::Expression({SweenBob::B})}), FactsManager<SweenBob>::Expression({SweenBob::A, SweenBob::NB})});
-
-    while(fm.executeProgram(actions));
+        bLoop = sm.executeProgram(actions);
+    } while (bLoop);
 
     return 0;
 }
