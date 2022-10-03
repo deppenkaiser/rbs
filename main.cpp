@@ -3,13 +3,19 @@
 
 int main()
 {
-    Actions actions;
-    FactsManager fm;
+    enum SweenBob
+    {
+        NA, A,
+        NB, B
+    };
 
-    fm.setValue(Token::B, 100);
+    FactsManager<SweenBob>::Actions actions;
+    FactsManager<SweenBob> fm;
 
-    actions.push_back({Rule({Expression({Token::NA})}), Expression({Token::B})});
-    actions.push_back({Rule({Expression({Token::B})}), Expression({Token::A, Token::NB})});
+    fm.setValue(SweenBob::B, 100);
+
+    actions.push_back({FactsManager<SweenBob>::Rule({FactsManager<SweenBob>::Expression({SweenBob::NA})}), FactsManager<SweenBob>::Expression({SweenBob::B})});
+    actions.push_back({FactsManager<SweenBob>::Rule({FactsManager<SweenBob>::Expression({SweenBob::B})}), FactsManager<SweenBob>::Expression({SweenBob::A, SweenBob::NB})});
 
     while(fm.executeProgram(actions));
 
