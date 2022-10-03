@@ -5,11 +5,12 @@
 #include <map>
 
 template<class TokenType>
-class FactsManager
+class RBS
 {
 	private:
 		typedef std::vector<TokenType> Facts;
 
+	protected:
 		enum class ValueType
 		{
 			U_INTEGER,
@@ -151,31 +152,16 @@ class FactsManager
 			m_facts = tmp;
 		}
 
-		bool calculateTokenValue(const TokenType& token, TokenValue* pTokenValue)
-		{
-			bool bRetVal = true;
-
-			switch (token)
-			{
-				case TokenType::B:
-					bRetVal = pTokenValue->value.uValue > 20;
-					break;
-
-				default:
-					break;
-			}
-
-			return bRetVal;
-		}
-	
 	public:
-		FactsManager()
+		RBS()
 		{
 		}
 
-		~FactsManager()
+		~RBS()
 		{
 		}
+
+		virtual bool calculateTokenValue(const TokenType& token, TokenValue* pTokenValue) = 0;
 
 		bool executeProgram(const Actions& actions)
 		{
