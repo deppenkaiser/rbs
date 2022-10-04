@@ -4,28 +4,41 @@
 
 enum SweenBob
 {
-	NA, A,
-	NB, B
+	N_COUNTER, COUNTER,
+	N_INITIALIZE, INITIALIZE,
+	N_CALCULATE_COUNTER, CALCULATE_COUNTER,
+	N_CHECK_STOP, CHECK_STOP,
+	N_STOP, STOP
 };
 
 class SM : public RBS<SweenBob>
 {
 	public:
-		virtual bool calculateTokenValue(const SweenBob& token, TokenValue* pTokenValue)
+		virtual bool calculateInputValue(const SweenBob& token)
 		{
 			bool bRetVal = true;
 
 			switch (token)
 			{
-				case SweenBob::A:
-					break;
-
-				case SweenBob::B:
-					bRetVal = pTokenValue->value.uValue < 20;
-					setValue(token, 10);
+				case SweenBob::CHECK_STOP:
+					bRetVal = getValue(SweenBob::COUNTER).value.uValue < 1;
 					break;
 			}
 
 			return bRetVal;
+		}
+
+		virtual void calculateOutputValue(const SweenBob& token)
+		{
+			switch (token)
+			{
+				case SweenBob::INITIALIZE:
+					setValue(SweenBob::COUNTER, 100);
+					break;
+
+				case SweenBob::CALCULATE_COUNTER:
+					setValue(SweenBob::COUNTER, getValue(SweenBob::COUNTER).value.uValue - 1);
+					break;
+			}
 		}
 };

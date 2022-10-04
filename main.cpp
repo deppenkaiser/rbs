@@ -6,10 +6,9 @@ int main()
     SM::Actions actions;
     SM sm;
 
-    sm.setValue(SweenBob::B, 100);
-
-    actions.push_back({SM::Rule({SM::Expression({SweenBob::NA})}), SM::Expression({SweenBob::B})});
-    actions.push_back({SM::Rule({SM::Expression({SweenBob::B})}), SM::Expression({SweenBob::A, SweenBob::NB})});
+    actions.push_back({SM::Rule({SM::Expression({SweenBob::N_INITIALIZE, SweenBob::N_STOP})}), SM::Expression({SweenBob::INITIALIZE, SweenBob::CHECK_STOP})});
+    actions.push_back({SM::Rule({SM::Expression({SweenBob::INITIALIZE})}), SM::Expression({SweenBob::CALCULATE_COUNTER})});
+    actions.push_back({SM::Rule({SM::Expression({SweenBob::CHECK_STOP})}), SM::Expression({SweenBob::STOP, SweenBob::N_INITIALIZE, SweenBob::N_CALCULATE_COUNTER, SweenBob::N_CHECK_STOP})});
 
     bool bLoop = false;
     do
