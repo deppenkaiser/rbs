@@ -158,7 +158,7 @@ class RBS
 		{
 		}
 
-		~RBS()
+		virtual ~RBS()
 		{
 		}
 
