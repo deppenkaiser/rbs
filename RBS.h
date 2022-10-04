@@ -64,9 +64,9 @@ class RBS
 				{
 					bRetVal = true;
 
-					if ((m_values.find(token) != m_values.end()) && bInput)
+					if (bInput)
 					{
-						bRetVal = calculateTokenValue(token, &m_values[token]);
+						bRetVal = calculateInputValue(token);
 					}            
 					break;
 				}
@@ -130,6 +130,7 @@ class RBS
 			if (isTokenTrue(token))
 			{
 				addToken(token);
+				calculateOutputValue(token);
 			}
 			else
 			{
@@ -161,7 +162,8 @@ class RBS
 		{
 		}
 
-		virtual bool calculateTokenValue(const TokenType& token, TokenValue* pTokenValue) = 0;
+		virtual bool calculateInputValue(const TokenType& token) = 0;
+		virtual void calculateOutputValue(const TokenType& token) = 0;
 
 		bool executeProgram(const Actions& actions)
 		{
@@ -180,6 +182,11 @@ class RBS
 			}
 
 			return bLoopAgain;
+		}
+
+		const TokenValue& getValue(const TokenType& token) const
+		{
+			return m_values.at(token);
 		}
 
 		void setValue(const TokenType& token, uint32_t uValue)
