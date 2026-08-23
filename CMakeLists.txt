@@ -1,9 +1,9 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.10)
+project(rbs C)
 
-project(rbs LANGUAGES CXX)
-
-add_executable(rbs)
-
-target_sources(rbs PRIVATE
-    main.cpp
+add_executable(rbs
+    rbs.c
+    sm.c
 )
+
+target_include_directories(rbs PRIVATE .)
