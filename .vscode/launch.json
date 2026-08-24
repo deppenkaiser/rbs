@@ -5,10 +5,10 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Launch iwt",
+			"name": "Launch rbs",
 			"type": "lldb",
 			"request": "launch",
-			"program": "${workspaceRoot}/build/bin/iwt",
+			"program": "${workspaceRoot}/build/bin/rbs",
 			"args": [],
 			"cwd": "${workspaceRoot}"
 		}
