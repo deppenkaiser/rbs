@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdlib.h>
 #include <memory.h>
 #include "rbs.h"
@@ -61,9 +62,8 @@ void rbs_initialize_facts(int32_t* facts, uint32_t token_count)
 
 bool rbs_is_fact(int32_t* facts, int32_t fact)
 {
-	uint32_t magnitude = fact < 0 ? (uint32_t) -fact : (uint32_t) fact;
-
-	return facts[magnitude - 1] == fact;
+	bool is_positiv = fact > 0;
+	return facts[is_positiv ? fact : rbs_invert_token(fact)] == fact;
 }
 
 void rbs_set_fact(int32_t* facts, int32_t fact)
@@ -97,23 +97,23 @@ bool rbs_compare(memory_t memory, int32_t value, enum operation op, double opera
 
 bool rbs_term_is_true(struct rbs* rbs, rbs_term_t term)
 {
-	if (term.comparison)
+	if (term->comparison)
 	{
-		return rbs_compare(rbs->memory, term.value, term.op, term.operand);
+		return rbs_compare(rbs->memory, term->value_enum, term->op, term->operand);
 	}
-	return rbs_is_fact(rbs->facts, term.fact);
+	return rbs_is_fact(rbs->facts, term->fact_enum);
 }
 
-void rbs_fire(struct rbs* rbs, const rbs_rule_t* rules, size_t rule_count)
+void rbs_fire(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count)
 {
 	for (size_t i = 0; i < rule_count; ++i)
 	{
-		const rbs_rule_t* rule = &rules[i];
+		const rbs_rule_t rule = &rules[i];
 		bool matches = true;
 
-		for (const rbs_term_t* term = rule->if_terms; !(term->fact == 0 && !term->comparison); ++term)
+		for (rbs_term_t term = rule->if_terms; !(term->fact_enum == 0 && !term->comparison); ++term)
 		{
-			if (!rbs_term_is_true(rbs, *term))
+			if (!rbs_term_is_true(rbs, term))
 			{
 				matches = false;
 				break;
@@ -127,5 +127,32 @@ void rbs_fire(struct rbs* rbs, const rbs_rule_t* rules, size_t rule_count)
 				rbs_set_fact(rbs->facts, *fact);
 			}
 		}
+	}
+}
+
+void rbs_apply_effects(struct rbs* rbs, const rbs_effect_t effects, size_t effect_count)
+{
+	for (size_t i = 0; i < effect_count; ++i)
+	{
+		const rbs_effect_t effect = &effects[i];
+
+		if (!rbs_is_fact(rbs->facts, effect->trigger_fact_enum))
+		{
+			continue;
+		}
+
+		double result = rbs->memory[(size_t) effect->value_enum];
+
+		switch (effect->op)
+		{
+			case ADD: result += effect->operand; break;
+			case SUB: result -= effect->operand; break;
+			case MUL: result *= effect->operand; break;
+			case DIV: result /= effect->operand; break;
+			default: break;
+		}
+
+		rbs->memory[(size_t) effect->value_enum] = result;
+		rbs_set_fact(rbs->facts, rbs_invert_token(effect->trigger_fact_enum));
 	}
 }
