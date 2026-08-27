@@ -16,6 +16,7 @@ add_executable(rbs)
 
 target_sources(rbs PRIVATE
 	src/main.c
+	src/rbs.c
 )
 
 target_include_directories(rbs PRIVATE
