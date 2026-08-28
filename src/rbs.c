@@ -54,6 +54,11 @@ void rbs_destroy_memory_buffer(memory_t* pmemory)
 
 void rbs_initialize_facts(int32_t* facts, uint32_t token_count)
 {
+	if (facts == NULL)
+	{
+		return;
+	}
+
 	for (uint32_t i = 1; i < token_count; ++i)
 	{
 		facts[i - 1] = rbs_invert_token(i);
@@ -62,12 +67,22 @@ void rbs_initialize_facts(int32_t* facts, uint32_t token_count)
 
 bool rbs_is_fact(int32_t* facts, int32_t fact)
 {
+	if (facts == NULL || fact == 0)
+	{
+		return false;
+	}
+
 	bool is_positiv = fact > 0;
 	return facts[(is_positiv ? fact : rbs_invert_token(fact)) - 1] == fact;
 }
 
 void rbs_set_fact(int32_t* facts, int32_t fact)
 {
+	if (facts == NULL || fact == 0)
+	{
+		return;
+	}
+
 	uint32_t magnitude = fact < 0 ? (uint32_t) -fact : (uint32_t) fact;
 
 	facts[magnitude - 1] = fact;
@@ -75,11 +90,21 @@ void rbs_set_fact(int32_t* facts, int32_t fact)
 
 void rbs_initialize_memory(memory_t memory, uint32_t value_count)
 {
+	if (memory == NULL)
+	{
+		return;
+	}
+
 	memset(memory, 0, value_count * sizeof(double));
 }
 
 bool rbs_compare(memory_t memory, int32_t value, enum operation op, double operand)
 {
+	if (memory == NULL || value < 0)
+	{
+		return false;
+	}
+
 	double lhs = memory[(size_t) value];
 	int32_t op_value = op;
 
@@ -97,6 +122,11 @@ bool rbs_compare(memory_t memory, int32_t value, enum operation op, double opera
 
 bool rbs_term_is_true(struct rbs* rbs, rbs_term_t term)
 {
+	if (rbs == NULL || term == NULL)
+	{
+		return false;
+	}
+
 	if (term->comparison)
 	{
 		return rbs_compare(rbs->memory, term->value_enum, term->op, term->operand);
@@ -106,6 +136,11 @@ bool rbs_term_is_true(struct rbs* rbs, rbs_term_t term)
 
 void rbs_fire(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count)
 {
+	if (rbs == NULL || rules == NULL)
+	{
+		return;
+	}
+
 	for (size_t i = 0; i < rule_count; ++i)
 	{
 		const rbs_rule_t rule = &rules[i];
@@ -132,6 +167,11 @@ void rbs_fire(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count)
 
 void rbs_apply_effects(struct rbs* rbs, const rbs_effect_t effects, size_t effect_count)
 {
+	if (rbs == NULL || effects == NULL || rbs->memory == NULL)
+	{
+		return;
+	}
+
 	for (size_t i = 0; i < effect_count; ++i)
 	{
 		const rbs_effect_t effect = &effects[i];
@@ -148,7 +188,7 @@ void rbs_apply_effects(struct rbs* rbs, const rbs_effect_t effects, size_t effec
 			case ADD: result += effect->operand; break;
 			case SUB: result -= effect->operand; break;
 			case MUL: result *= effect->operand; break;
-			case DIV: result /= effect->operand; break;
+			case DIV: if (effect->operand == 0.0) continue; result /= effect->operand; break;
 			default: break;
 		}
 
