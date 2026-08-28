@@ -172,6 +172,10 @@ void rbs_apply_effects(struct rbs* rbs, const rbs_effect_t effects, size_t effec
 		return;
 	}
 
+	/* Puffer fuer die auszuloesenden Trigger (ein Eintrag pro Effekt). */
+	size_t staged[effect_count];
+	size_t staged_count = 0;
+
 	for (size_t i = 0; i < effect_count; ++i)
 	{
 		const rbs_effect_t effect = &effects[i];
@@ -193,6 +197,25 @@ void rbs_apply_effects(struct rbs* rbs, const rbs_effect_t effects, size_t effec
 		}
 
 		rbs->memory[(size_t) effect->value_enum] = result;
-		rbs_set_fact(rbs->facts, rbs_invert_token(effect->trigger_fact_enum));
+		staged[staged_count++] = effect->trigger_fact_enum;
+	}
+
+	/* Neue Fakten erst am Loop-Ende setzen: alle Effekte feuern auf derselben
+	 * Faktenbasis; jeder ausgeloeste Trigger wird danach genau einmal invertiert. */
+	for (size_t i = 0; i < staged_count; ++i)
+	{
+		bool already = false;
+		for (size_t j = 0; j < i; ++j)
+		{
+			if (staged[j] == staged[i])
+			{
+				already = true;
+				break;
+			}
+		}
+		if (!already)
+		{
+			rbs_set_fact(rbs->facts, rbs_invert_token(staged[i]));
+		}
 	}
 }

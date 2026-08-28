@@ -45,3 +45,19 @@ target_include_directories(rbs_test PRIVATE
 
 add_test(NAME rbs_test COMMAND rbs_test)
 
+# --- Test für Effekt-Staging-Semantik (gemeinsamer Trigger feuert alle Effekte) ---
+add_executable(rbs_effects_test)
+
+target_sources(rbs_effects_test PRIVATE
+	test/test_effects.c
+	src/rbs.c
+)
+
+target_include_directories(rbs_effects_test PRIVATE
+	src
+	../../libraries
+)
+
+add_test(NAME rbs_effects_test COMMAND rbs_effects_test)
+
+
