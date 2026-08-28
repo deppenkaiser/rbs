@@ -27,3 +27,21 @@ target_link_libraries(rbs
 	PUBLIC
 		m
 )
+
+# --- Tests (Regression gegen Off-by-one-Indizierung) ---
+enable_testing()
+
+add_executable(rbs_test)
+
+target_sources(rbs_test PRIVATE
+	test/test_rbs.c
+	src/rbs.c
+)
+
+target_include_directories(rbs_test PRIVATE
+	src
+	../../libraries
+)
+
+add_test(NAME rbs_test COMMAND rbs_test)
+

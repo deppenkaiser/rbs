@@ -26,7 +26,7 @@ int32_t rbs_invert_token(int32_t token)
 
 int32_t* rbs_create_facts_buffer(uint32_t token_count)
 {
-	return malloc((token_count * 2 - 1) * sizeof(int32_t));
+	return malloc(token_count * sizeof(int32_t));
 }
 
 memory_t rbs_create_memory_buffer(uint32_t value_count)
@@ -63,7 +63,7 @@ void rbs_initialize_facts(int32_t* facts, uint32_t token_count)
 bool rbs_is_fact(int32_t* facts, int32_t fact)
 {
 	bool is_positiv = fact > 0;
-	return facts[is_positiv ? fact : rbs_invert_token(fact)] == fact;
+	return facts[(is_positiv ? fact : rbs_invert_token(fact)) - 1] == fact;
 }
 
 void rbs_set_fact(int32_t* facts, int32_t fact)
