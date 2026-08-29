@@ -133,7 +133,6 @@ bool rbs_term_is_true(struct rbs* rbs, rbs_term_t term)
 void rbs_step(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count,
               const rbs_effect_t effects, size_t effect_count)
 {
-    logging_log_message("rbs_step start");
     if (rbs == NULL || rbs->facts == NULL || rbs->memory == NULL)
     {
         return;
@@ -228,7 +227,7 @@ void rbs_step(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count,
 
     {
         char buf[512];
-        int pos = snprintf(buf, sizeof(buf), "rbs_step end");
+        int pos = snprintf(buf, sizeof(buf), "new facts:");
         for (size_t i = 0; i < changed_count; ++i)
         {
             pos += snprintf(buf + pos, sizeof(buf) - pos, " %d", changed_facts[i]);
