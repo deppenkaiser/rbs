@@ -39,6 +39,7 @@ typedef struct rbs
 	uint32_t token_count;
 	memory_t memory;
 	uint32_t value_count;
+	const char** fact_names;
 }* rbs_t;
 
 typedef struct rbs_rule

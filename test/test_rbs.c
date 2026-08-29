@@ -74,7 +74,7 @@ int main(void)
 	assert(mem != NULL);
 	struct rbs_effect div0 = { .trigger_fact_enum = T1, .value_enum = 0, .op = DIV, .operand = 0.0 };
 	struct rbs_effect effects[] = { div0 };
-	struct rbs r = { .facts = facts, .token_count = TN, .memory = mem, .value_count = 1 };
+	struct rbs r = { .facts = facts, .token_count = TN, .memory = mem, .value_count = 1, .fact_names = NULL };
 	rbs_step(&r, NULL, 0, effects, 1);
 	assert(mem[0] == 0.0);
 	assert(rbs_is_fact(facts, TN, T1));

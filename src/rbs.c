@@ -246,7 +246,21 @@ void rbs_step(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count,
         int pos = snprintf(buf, sizeof(buf), "rbs_step end");
         for (size_t i = 0; i < changed_count; ++i)
         {
-            pos += snprintf(buf + pos, sizeof(buf) - pos, " %d", changed_facts[i]);
+            int32_t f = changed_facts[i];
+            const char* name = NULL;
+            uint32_t magnitude = f < 0 ? (uint32_t)-f : (uint32_t)f;
+            if (rbs && rbs->fact_names && magnitude > 0 && magnitude <= rbs->token_count)
+            {
+                name = rbs->fact_names[magnitude - 1];
+            }
+            if (name && name[0] != '\0')
+            {
+                pos += snprintf(buf + pos, sizeof(buf) - pos, " %s", name);
+            }
+            else
+            {
+                pos += snprintf(buf + pos, sizeof(buf) - pos, " %d", f);
+            }
         }
         logging_log_message(buf);
     }

@@ -24,6 +24,8 @@ typedef enum token
 	TOKEN_COUNT
 }* token_t;
 
+static const char* token_names[] = { "START", "RAIN", "CLOUDY", "WET", "UMBRELLA", "ADULT", "PAY" };
+
 typedef enum value
 {
 	AGE,
@@ -106,7 +108,8 @@ int main()
 		.facts = rbs_create_facts_buffer(TOKEN_COUNT),
 		.token_count = TOKEN_COUNT,
 		.memory = rbs_create_memory_buffer(VALUE_COUNT),
-		.value_count = VALUE_COUNT
+		.value_count = VALUE_COUNT,
+		.fact_names = token_names
 	};
 
 	rbs_initialize_facts(rbs.facts, TOKEN_COUNT);

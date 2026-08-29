@@ -103,7 +103,8 @@ int main(void)
 		.facts = rbs_create_facts_buffer(TN),
 		.token_count = TN,
 		.memory = rbs_create_memory_buffer(VALUE_COUNT),
-		.value_count = VALUE_COUNT
+		.value_count = VALUE_COUNT,
+		.fact_names = NULL
 	};
 	assert(rbs.facts != NULL);
 	assert(rbs.memory != NULL);

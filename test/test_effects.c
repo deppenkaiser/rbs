@@ -33,7 +33,7 @@ int main(void) {
         { T1, M2, MUL, 3.0 }
     };
 
-    struct rbs r = { .facts = facts, .token_count = TN, .memory = mem, .value_count = VC };
+    struct rbs r = { .facts = facts, .token_count = TN, .memory = mem, .value_count = VC, .fact_names = NULL };
 
     /* Ein Schritt: alle Effekte rechnen vom unveraenderten Basis-Stand
      * (M2: einmal 10*2=20 und einmal 10*3=30, zuletzt geschrieben -> 30),
