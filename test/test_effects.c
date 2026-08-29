@@ -55,8 +55,6 @@ int main(void) {
     assert(mem[M2] == 30.0);
     assert(mem[M3] == 2.5);
 
-    printf("rbs_effects_test: ALLE TESTS OK\n");
-
     rbs_destroy_memory_buffer(&mem);
     rbs_destroy_facts_buffer(&facts);
     return 0;

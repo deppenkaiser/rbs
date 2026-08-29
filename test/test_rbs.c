@@ -92,6 +92,5 @@ int main(void)
 	rbs_destroy_facts_buffer(&facts);
 	assert(facts == NULL);
 
-	printf("rbs_test: ALLE TESTS OK\n");
 	return 0;
 }

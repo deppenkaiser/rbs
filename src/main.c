@@ -69,9 +69,6 @@ static bool _app_handle_wet(sm_state_t next_state, void* user_data)
 {
 	rbs_sm_t fsm = (rbs_sm_t) user_data;
 
-	printf("WET:      true (Regen, Schirm noetig)\n");
-	printf("MONEY:    %.0f\n", fsm->rbs->memory[MONEY]);
-
 	/* Konsumieren: Regen stoppen und WET-Fakt loeschen, sonst re-feriert die
 	 * Wetterregel WET im naechsten Tick und die Schleife haengt hier. */
 	rbs_set_fact(fsm->rbs->facts, fsm->rbs->token_count, rbs_invert_token(RAIN));
@@ -83,15 +80,13 @@ static bool _app_handle_wet(sm_state_t next_state, void* user_data)
 static void _app_on_step(rbs_sm_t fsm, uint32_t tick)
 {
 	(void) fsm;
-	printf("--- Step %u ---\n", tick);
+	(void) tick;
 }
 
 static bool _app_handle_adult(sm_state_t next_state, void* user_data)
 {
 	rbs_sm_t fsm = (rbs_sm_t) user_data;
-
-	printf("ADULT:    true (erwachsen -> es wird bezahlt)\n");
-	printf("MONEY:    %.0f\n", fsm->rbs->memory[MONEY]);
+	(void) fsm;
 
 	/* Endzustand: FSM beenden. */
 	return false;
@@ -137,8 +132,8 @@ int main()
 
 	rbs_sm_run(&fsm);
 
-rbs_destroy_facts_buffer(&rbs.facts);
-rbs_destroy_memory_buffer(&rbs.memory);
+	rbs_destroy_facts_buffer(&rbs.facts);
+	rbs_destroy_memory_buffer(&rbs.memory);
 
 	logging_log_message("rbs main end");
 	return 0;

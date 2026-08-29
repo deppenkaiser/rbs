@@ -136,6 +136,5 @@ int main(void)
 	rbs_destroy_memory_buffer(&rbs.memory);
 	rbs_destroy_facts_buffer(&rbs.facts);
 
-	printf("rbs_sm_test: ALLE TESTS OK\n");
 	return 0;
 }
