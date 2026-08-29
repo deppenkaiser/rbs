@@ -36,13 +36,15 @@ Ein Programm in diesem Muster ist damit selbst das Modell seiner Zustände und
 #include <sm/sm.h>   /* Bibliotheken immer mit spitzen Klammern */
 #include "rbs.h"
 
-struct rbs_term if_adult[] = { {AGE, GT, 18}, {ZERO} };
+struct rbs_term if_adult[] = { { .comparison = true, .value_enum = AGE, .op = GT, .operand = 18 }, { .comparison = false, .fact_enum = ZERO } };
 enum token then_adult[] = { ADULT, PAY, ZERO };
-struct rbs_effect effects[] = { { PAY, MONEY, SUB, 10 } };
+struct rbs_effect effects[] = { { .trigger_fact_enum = PAY, .value_enum = MONEY, .op = SUB, .operand = 10 } };
 
 struct rbs rbs = {
     .facts = fact_buffer,
+    .token_count = TOKEN_COUNT,
     .memory = mel,
+    .value_count = VALUE_COUNT,
 };
 
 rbs_step(&rbs, rules, rule_count, effects, effect_count);
@@ -58,3 +60,7 @@ ctest --test-dir build
 
 Kern + Tests kommen ohne externe Abhängigkeiten aus; `main.c` (Demo-App)
 zeigt als Beispiel Wetter- und Erwachsenen-Token mit Ausgabe je Schritt.
+
+## Wiki
+
+Dokumentation: [rbs – Rule Based System als Zustandsautomat](https://czybor.i234.me/wiki/sw-module/rbs/) (Quartz-Wiki)
