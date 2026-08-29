@@ -3,9 +3,9 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <sm/sm.h>
 
 #include "rbs.h"
-#include "sm/sm.h"
 
 typedef struct rbs_sm_slot
 {
