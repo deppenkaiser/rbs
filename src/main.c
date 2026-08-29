@@ -1,4 +1,5 @@
 #include "rbs.h"
+#include "rbs_sm.h"
 
 #include <stdio.h>
 
@@ -26,7 +27,6 @@ typedef enum value
 {
 	AGE,
 	MONEY,
-	SPEED,
 	VALUE_COUNT
 }* value_t;
 
@@ -64,6 +64,38 @@ struct rbs_effect effects[] =
 	{ .trigger_fact_enum = PAY, .value_enum = MONEY, .op = SUB, .operand = 10 }
 };
 
+static bool _app_handle_wet(sm_state_t next_state, void* user_data)
+{
+	rbs_sm_t fsm = (rbs_sm_t) user_data;
+
+	printf("WET:      true (Regen, Schirm noetig)\n");
+	printf("MONEY:    %.0f\n", fsm->rbs->memory[MONEY]);
+
+	/* Konsumieren: Regen stoppen und WET-Fakt loeschen, sonst re-feriert die
+	 * Wetterregel WET im naechsten Tick und die Schleife haengt hier. */
+	rbs_set_fact(fsm->rbs->facts, rbs_invert_token(RAIN));
+	rbs_set_fact(fsm->rbs->facts, rbs_invert_token(WET));
+
+	return rbs_sm_advance(fsm, next_state);
+}
+
+static bool _app_handle_adult(sm_state_t next_state, void* user_data)
+{
+	rbs_sm_t fsm = (rbs_sm_t) user_data;
+
+	printf("ADULT:    true (erwachsen -> es wird bezahlt)\n");
+	printf("MONEY:    %.0f\n", fsm->rbs->memory[MONEY]);
+
+	/* Endzustand: FSM beenden. */
+	return false;
+}
+
+struct rbs_sm_slot slots[] =
+{
+	{ .fact = WET,   .handler = _app_handle_wet },
+	{ .fact = ADULT, .handler = _app_handle_adult },
+};
+
 int main()
 {
 	struct rbs rbs =
@@ -81,17 +113,18 @@ int main()
 	rbs_set_fact(rbs.facts, RAIN);
 	rbs_set_fact(rbs.facts, CLOUDY);
 
-	size_t rule_count = sizeof(rules) / sizeof(rules[0]);
-	rbs_fire(&rbs, rules, rule_count);
+	struct rbs_sm fsm =
+	{
+		.rbs = &rbs,
+		.rules = rules,
+		.rule_count = sizeof(rules) / sizeof(rules[0]),
+		.effects = effects,
+		.effect_count = sizeof(effects) / sizeof(effects[0]),
+		.slots = slots,
+		.slot_count = sizeof(slots) / sizeof(slots[0]),
+	};
 
-	size_t effect_count = sizeof(effects) / sizeof(effects[0]);
-	rbs_apply_effects(&rbs, effects, effect_count);
-
-	printf("WET:      %s\n", rbs_is_fact(rbs.facts, WET) ? "true" : "false");
-	printf("UMBRELLA: %s\n", rbs_is_fact(rbs.facts, UMBRELLA) ? "true" : "false");
-	printf("NOT WET:  %s\n", rbs_is_fact(rbs.facts, N_WET) ? "true" : "false");
-	printf("ADULT:    %s\n", rbs_is_fact(rbs.facts, ADULT) ? "true" : "false");
-	printf("MONEY:    %.0f\n", rbs.memory[MONEY]);
+	rbs_sm_run(&fsm);
 
 	rbs_destroy_facts_buffer(&rbs.facts);
 	rbs_destroy_memory_buffer(&rbs.memory);
