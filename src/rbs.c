@@ -130,6 +130,29 @@ bool rbs_term_is_true(struct rbs* rbs, rbs_term_t term)
     return rbs_is_fact(rbs->facts, rbs->token_count, term->fact_enum);
 }
 
+static void set_fact_if_changed(int32_t* facts, uint32_t token_count, int32_t fact, int32_t* changed, size_t* changed_count)
+{
+    if (facts == NULL || fact == 0)
+    {
+        return;
+    }
+    uint32_t magnitude = fact < 0 ? (uint32_t) -fact : (uint32_t) fact;
+    if (magnitude >= token_count || magnitude == 0)
+    {
+        return;
+    }
+    uint32_t idx = magnitude - 1;
+    if (facts[idx] != fact)
+    {
+        facts[idx] = fact;
+        if (changed && changed_count && *changed_count < 256)
+        {
+            changed[*changed_count] = fact;
+            (*changed_count)++;
+        }
+    }
+}
+
 void rbs_step(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count,
               const rbs_effect_t effects, size_t effect_count)
 {
@@ -194,6 +217,7 @@ void rbs_step(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count,
 
     int32_t changed_facts[256];
     size_t changed_count = 0;
+
     for (size_t i = 0; i < rule_count; ++i)
     {
         if (!matched[i])
@@ -202,11 +226,7 @@ void rbs_step(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count,
         }
         for (const int32_t* fact = rules[i].then_facts; *fact != 0; ++fact)
         {
-            rbs_set_fact(rbs->facts, rbs->token_count, *fact);
-            if (changed_count < 256)
-            {
-                changed_facts[changed_count++] = *fact;
-            }
+            set_fact_if_changed(rbs->facts, rbs->token_count, *fact, changed_facts, &changed_count);
         }
     }
 
@@ -218,16 +238,12 @@ void rbs_step(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count,
         }
         rbs->memory[(size_t) effects[i].value_enum] = results[i];
         int32_t inv = rbs_invert_token(effects[i].trigger_fact_enum);
-        rbs_set_fact(rbs->facts, rbs->token_count, inv);
-        if (changed_count < 256)
-        {
-            changed_facts[changed_count++] = inv;
-        }
+        set_fact_if_changed(rbs->facts, rbs->token_count, inv, changed_facts, &changed_count);
     }
 
     {
         char buf[512];
-        int pos = snprintf(buf, sizeof(buf), "new facts:");
+        int pos = snprintf(buf, sizeof(buf), "rbs_step end");
         for (size_t i = 0; i < changed_count; ++i)
         {
             pos += snprintf(buf + pos, sizeof(buf) - pos, " %d", changed_facts[i]);
