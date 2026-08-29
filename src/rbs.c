@@ -165,6 +165,96 @@ void rbs_fire(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count)
 	}
 }
 
+void rbs_step(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count,
+              const rbs_effect_t effects, size_t effect_count)
+{
+	if (rbs == NULL || rules == NULL || effects == NULL ||
+	    rbs->facts == NULL || rbs->memory == NULL)
+	{
+		return;
+	}
+
+	/* Schritt-Semantik: erst ALLE Regeln/Effekte gegen dieselbe Basis
+	 * auswerten, dann gemeinsam committen. Kein zweiter Faktenpuffer
+	 * noetig — das negative Token (N_X) kodiert "nicht aktiv" bereits; die
+	 * Merk-Arrays sind nur O(Regeln) + O(Effekte) gross. */
+	bool matched[rule_count > 0 ? rule_count : 1];
+	bool fired[effect_count > 0 ? effect_count : 1];
+	double results[effect_count > 0 ? effect_count : 1];
+
+	for (size_t i = 0; i < rule_count; ++i)
+	{
+		const rbs_rule_t rule = &rules[i];
+		matched[i] = true;
+
+		for (rbs_term_t term = rule->if_terms; !(term->fact_enum == 0 && !term->comparison); ++term)
+		{
+			if (!rbs_term_is_true(rbs, term))
+			{
+				matched[i] = false;
+				break;
+			}
+		}
+	}
+
+	/* Effekte: Ergebnis vom UNVERAENDERTEN Speicher-Stand rechnen. */
+	for (size_t i = 0; i < effect_count; ++i)
+	{
+		const rbs_effect_t effect = &effects[i];
+		fired[i] = rbs_is_fact(rbs->facts, effect->trigger_fact_enum);
+		results[i] = 0.0;
+
+		if (!fired[i] || effect->value_enum < 0)
+		{
+			fired[i] = false;
+			continue;
+		}
+
+		double result = rbs->memory[(size_t) effect->value_enum];
+		switch (effect->op)
+		{
+			case ADD: result += effect->operand; break;
+			case SUB: result -= effect->operand; break;
+			case MUL: result *= effect->operand; break;
+			case DIV:
+				if (effect->operand == 0.0)
+				{
+					fired[i] = false;
+					continue;
+				}
+				result /= effect->operand;
+				break;
+			default: break;
+		}
+		results[i] = result;
+	}
+
+	/* Commit: abgeleitete Fakten + Aenderungen wirken ab dem naechsten
+	 * Schritt. Trigger-Invertierung ist idempotent (N_X hat genau einen
+	 * Wert) — ein Dedup-Puffer ist ueberfluessig. */
+	for (size_t i = 0; i < rule_count; ++i)
+	{
+		if (!matched[i])
+		{
+			continue;
+		}
+		for (const int32_t* fact = rules[i].then_facts; *fact != 0; ++fact)
+		{
+			rbs_set_fact(rbs->facts, *fact);
+		}
+	}
+
+	for (size_t i = 0; i < effect_count; ++i)
+	{
+		if (!fired[i])
+		{
+			continue;
+		}
+		rbs->memory[(size_t) effects[i].value_enum] = results[i];
+		rbs_set_fact(rbs->facts, rbs_invert_token(effects[i].trigger_fact_enum));
+	}
+}
+
 void rbs_apply_effects(struct rbs* rbs, const rbs_effect_t effects, size_t effect_count)
 {
 	if (rbs == NULL || effects == NULL || rbs->memory == NULL)

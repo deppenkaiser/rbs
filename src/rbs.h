@@ -67,3 +67,10 @@ bool rbs_compare(memory_t memory, int32_t value, enum operation op, double opera
 bool rbs_term_is_true(struct rbs* rbs, rbs_term_t term);
 void rbs_fire(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count);
 void rbs_apply_effects(struct rbs* rbs, const rbs_effect_t effects, size_t effect_count);
+/* Schritt-Semantik: wertet ALLE Regeln und Effekte gegen dieselbe
+ * Faktenbasis (und denselben Speicherstand) aus. Abgeleitete Fakten und
+ * Aenderungen werden erst am Ende des Schritts committed und wirken damit
+ * erst im naechsten Schritt sichtbar — keine Regel sieht im laufenden
+ * Schritt das Ergebnis einer anderen Regel. */
+void rbs_step(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count,
+              const rbs_effect_t effects, size_t effect_count);

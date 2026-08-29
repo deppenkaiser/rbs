@@ -22,6 +22,9 @@ typedef struct rbs_sm
 	size_t effect_count;
 	rbs_sm_slot_t slots;
 	size_t slot_count;
+	/* Optional: wird nach jedem Schritt mit der Schrittnummer aufgerufen
+	 * (z. B. um die Step-Grenze in der Konsole zu markieren). */
+	void (*on_step)(struct rbs_sm* fsm, uint32_t tick);
 	uint32_t ticks;
 }* rbs_sm_t;
 

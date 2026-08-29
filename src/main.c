@@ -79,6 +79,12 @@ static bool _app_handle_wet(sm_state_t next_state, void* user_data)
 	return rbs_sm_advance(fsm, next_state);
 }
 
+static void _app_on_step(rbs_sm_t fsm, uint32_t tick)
+{
+	(void) fsm;
+	printf("--- Step %u ---\n", tick);
+}
+
 static bool _app_handle_adult(sm_state_t next_state, void* user_data)
 {
 	rbs_sm_t fsm = (rbs_sm_t) user_data;
@@ -122,6 +128,7 @@ int main()
 		.effect_count = sizeof(effects) / sizeof(effects[0]),
 		.slots = slots,
 		.slot_count = sizeof(slots) / sizeof(slots[0]),
+		.on_step = _app_on_step,
 	};
 
 	rbs_sm_run(&fsm);

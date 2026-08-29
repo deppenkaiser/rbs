@@ -28,10 +28,16 @@ bool rbs_sm_advance(rbs_sm_t fsm, sm_state_t current)
 		return false;
 	}
 
-	/* Regeln + Effekte anwenden: das RBS bestimmt die Ziel-Zustaende. */
-	rbs_fire(fsm->rbs, fsm->rules, fsm->rule_count);
-	rbs_apply_effects(fsm->rbs, fsm->effects, fsm->effect_count);
+	/* Ein Schritt: alle Regeln + Effekte auf derselben Basis, Commit erst
+	 * am Schritt-Ende. Das RBS bestimmt so die Ziel-Zustaende. */
+	rbs_step(fsm->rbs, fsm->rules, fsm->rule_count,
+	         fsm->effects, fsm->effect_count);
 	fsm->ticks++;
+
+	if (fsm->on_step != NULL)
+	{
+		fsm->on_step(fsm, fsm->ticks);
+	}
 
 	/* Aktiven Zustand ueber die Faktenbasis ermitteln und umschalten. */
 	for (size_t i = 0; i < fsm->slot_count; ++i)
