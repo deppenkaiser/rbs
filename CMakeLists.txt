@@ -12,10 +12,9 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# --- sm State-Machine (rbs_sm steuert die FSM) ---
-add_subdirectory(../../libraries/sm ${CMAKE_BINARY_DIR}/sm)
-
 add_executable(rbs)
+add_subdirectory(../../libraries/sm ${CMAKE_BINARY_DIR}/sm)
+add_subdirectory(../../libraries/logging ${CMAKE_BINARY_DIR}/logging)
 
 target_sources(rbs PRIVATE
 	src/main.c
@@ -31,6 +30,7 @@ target_link_libraries(rbs
 	PUBLIC
 		m
 		sm
+		logging
 )
 
 # --- Tests (Regression gegen Off-by-one-Indizierung) ---
@@ -48,6 +48,8 @@ target_include_directories(rbs_test PRIVATE
 	../../libraries
 )
 
+target_link_libraries(rbs_test PRIVATE logging)
+
 add_test(NAME rbs_test COMMAND rbs_test)
 
 # --- Test für Effekt-Staging-Semantik (gemeinsamer Trigger feuert alle Effekte) ---
@@ -62,6 +64,8 @@ target_include_directories(rbs_effects_test PRIVATE
 	src
 	../../libraries
 )
+
+target_link_libraries(rbs_effects_test PRIVATE logging)
 
 add_test(NAME rbs_effects_test COMMAND rbs_effects_test)
 
@@ -84,6 +88,7 @@ target_link_libraries(rbs_sm_test
 	PUBLIC
 		m
 		sm
+		logging
 )
 
 add_test(NAME rbs_sm_test COMMAND rbs_sm_test)

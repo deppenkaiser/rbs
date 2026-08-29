@@ -2,6 +2,7 @@
 #include "rbs_sm.h"
 
 #include <stdio.h>
+#include <logging/logging.h>
 
 typedef enum token
 {
@@ -104,6 +105,7 @@ struct rbs_sm_slot slots[] =
 
 int main()
 {
+	logging_log_message("rbs main start");
 	struct rbs rbs =
 	{
 		.facts = rbs_create_facts_buffer(TOKEN_COUNT),
@@ -135,8 +137,9 @@ int main()
 
 	rbs_sm_run(&fsm);
 
-	rbs_destroy_facts_buffer(&rbs.facts);
-	rbs_destroy_memory_buffer(&rbs.memory);
+rbs_destroy_facts_buffer(&rbs.facts);
+rbs_destroy_memory_buffer(&rbs.memory);
 
+	logging_log_message("rbs main end");
 	return 0;
 }

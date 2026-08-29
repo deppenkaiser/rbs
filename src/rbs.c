@@ -1,3 +1,4 @@
+#include <logging/logging.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <memory.h>
@@ -219,4 +220,5 @@ void rbs_step(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count,
 		rbs->memory[(size_t) effects[i].value_enum] = results[i];
 		rbs_set_fact(rbs->facts, rbs->token_count, rbs_invert_token(effects[i].trigger_fact_enum));
 	}
+	logging_log_message("rbs_step end");
 }
