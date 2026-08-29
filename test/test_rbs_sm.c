@@ -74,8 +74,8 @@ static bool _sm_handle_wet(sm_state_t next_state, void* user_data)
 
 	/* Konsumieren: ohne das Loeschen re-feriert RAIN->WET im naechsten
 	 * Schritt und die Schleife haengt dauerhaft am WET-Marker. */
-	rbs_set_fact(fsm->rbs->facts, rbs_invert_token(RAIN));
-	rbs_set_fact(fsm->rbs->facts, rbs_invert_token(WET));
+	rbs_set_fact(fsm->rbs->facts, fsm->rbs->token_count, rbs_invert_token(RAIN));
+	rbs_set_fact(fsm->rbs->facts, fsm->rbs->token_count, rbs_invert_token(WET));
 
 	return rbs_sm_advance(fsm, next_state);
 }
@@ -101,7 +101,9 @@ int main(void)
 	struct rbs rbs =
 	{
 		.facts = rbs_create_facts_buffer(TN),
-		.memory = rbs_create_memory_buffer(VALUE_COUNT)
+		.token_count = TN,
+		.memory = rbs_create_memory_buffer(VALUE_COUNT),
+		.value_count = VALUE_COUNT
 	};
 	assert(rbs.facts != NULL);
 	assert(rbs.memory != NULL);
@@ -111,7 +113,7 @@ int main(void)
 	rbs.memory[AGE] = 20;
 	rbs.memory[MONEY] = 100;
 
-	rbs_set_fact(rbs.facts, RAIN);
+	rbs_set_fact(rbs.facts, rbs.token_count, RAIN);
 
 	struct rbs_sm fsm = {0};
 	rbs_sm_init(&fsm, &rbs, rules, 2, effects, 1, slots, 2);
@@ -126,10 +128,10 @@ int main(void)
 	assert(calls_wet == 1);
 	assert(calls_adult == 1);
 	assert(rbs.memory[MONEY] == 90.0);
-	assert(rbs_is_fact(rbs.facts, ADULT));
-	assert(!rbs_is_fact(rbs.facts, WET));
-	assert(!rbs_is_fact(rbs.facts, RAIN));
-	assert(!rbs_is_fact(rbs.facts, PAY));
+	assert(rbs_is_fact(rbs.facts, rbs.token_count, ADULT));
+	assert(!rbs_is_fact(rbs.facts, rbs.token_count, WET));
+	assert(!rbs_is_fact(rbs.facts, rbs.token_count, RAIN));
+	assert(!rbs_is_fact(rbs.facts, rbs.token_count, PAY));
 
 	rbs_destroy_memory_buffer(&rbs.memory);
 	rbs_destroy_facts_buffer(&rbs.facts);

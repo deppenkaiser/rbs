@@ -73,8 +73,8 @@ static bool _app_handle_wet(sm_state_t next_state, void* user_data)
 
 	/* Konsumieren: Regen stoppen und WET-Fakt loeschen, sonst re-feriert die
 	 * Wetterregel WET im naechsten Tick und die Schleife haengt hier. */
-	rbs_set_fact(fsm->rbs->facts, rbs_invert_token(RAIN));
-	rbs_set_fact(fsm->rbs->facts, rbs_invert_token(WET));
+	rbs_set_fact(fsm->rbs->facts, fsm->rbs->token_count, rbs_invert_token(RAIN));
+	rbs_set_fact(fsm->rbs->facts, fsm->rbs->token_count, rbs_invert_token(WET));
 
 	return rbs_sm_advance(fsm, next_state);
 }
@@ -107,7 +107,9 @@ int main()
 	struct rbs rbs =
 	{
 		.facts = rbs_create_facts_buffer(TOKEN_COUNT),
-		.memory = rbs_create_memory_buffer(VALUE_COUNT)
+		.token_count = TOKEN_COUNT,
+		.memory = rbs_create_memory_buffer(VALUE_COUNT),
+		.value_count = VALUE_COUNT
 	};
 
 	rbs_initialize_facts(rbs.facts, TOKEN_COUNT);
@@ -116,8 +118,8 @@ int main()
 	rbs.memory[AGE] = 20;
 	rbs.memory[MONEY] = 100;
 
-	rbs_set_fact(rbs.facts, RAIN);
-	rbs_set_fact(rbs.facts, CLOUDY);
+	rbs_set_fact(rbs.facts, rbs.token_count, RAIN);
+	rbs_set_fact(rbs.facts, rbs.token_count, CLOUDY);
 
 	struct rbs_sm fsm =
 	{

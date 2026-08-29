@@ -3,22 +3,6 @@
 #include <memory.h>
 #include "rbs.h"
 
-bool rbs_check_token_is_true(int32_t token)
-{
-	bool is_true = false;
-
-	if (token > 0)
-	{
-		is_true = true;
-	}
-	else if (token < 0)
-	{
-		is_true = false;
-	}
-
-	return is_true;
-}
-
 int32_t rbs_invert_token(int32_t token)
 {
 	return token * -1;
@@ -65,18 +49,24 @@ void rbs_initialize_facts(int32_t* facts, uint32_t token_count)
 	}
 }
 
-bool rbs_is_fact(int32_t* facts, int32_t fact)
+bool rbs_is_fact(int32_t* facts, uint32_t token_count, int32_t fact)
 {
 	if (facts == NULL || fact == 0)
 	{
 		return false;
 	}
 
+	uint32_t magnitude = fact < 0 ? (uint32_t) -fact : (uint32_t) fact;
+	if (magnitude >= token_count)
+	{
+		return false;
+	}
+
 	bool is_positiv = fact > 0;
-	return facts[(is_positiv ? fact : rbs_invert_token(fact)) - 1] == fact;
+	return facts[magnitude - 1] == fact;
 }
 
-void rbs_set_fact(int32_t* facts, int32_t fact)
+void rbs_set_fact(int32_t* facts, uint32_t token_count, int32_t fact)
 {
 	if (facts == NULL || fact == 0)
 	{
@@ -84,6 +74,10 @@ void rbs_set_fact(int32_t* facts, int32_t fact)
 	}
 
 	uint32_t magnitude = fact < 0 ? (uint32_t) -fact : (uint32_t) fact;
+	if (magnitude >= token_count)
+	{
+		return;
+	}
 
 	facts[magnitude - 1] = fact;
 }
@@ -98,9 +92,9 @@ void rbs_initialize_memory(memory_t memory, uint32_t value_count)
 	memset(memory, 0, value_count * sizeof(double));
 }
 
-bool rbs_compare(memory_t memory, int32_t value, enum operation op, double operand)
+bool rbs_compare(memory_t memory, uint32_t value_count, int32_t value, enum operation op, double operand)
 {
-	if (memory == NULL || value < 0)
+	if (memory == NULL || value < 0 || (uint32_t) value >= value_count)
 	{
 		return false;
 	}
@@ -129,9 +123,9 @@ bool rbs_term_is_true(struct rbs* rbs, rbs_term_t term)
 
 	if (term->comparison)
 	{
-		return rbs_compare(rbs->memory, term->value_enum, term->op, term->operand);
+		return rbs_compare(rbs->memory, rbs->value_count, term->value_enum, term->op, term->operand);
 	}
-	return rbs_is_fact(rbs->facts, term->fact_enum);
+	return rbs_is_fact(rbs->facts, rbs->token_count, term->fact_enum);
 }
 
 void rbs_step(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count,
@@ -173,10 +167,10 @@ void rbs_step(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count,
 	for (size_t i = 0; i < effect_count; ++i)
 	{
 		const rbs_effect_t effect = &effects[i];
-		fired[i] = rbs_is_fact(rbs->facts, effect->trigger_fact_enum);
+		fired[i] = rbs_is_fact(rbs->facts, rbs->token_count, effect->trigger_fact_enum);
 		results[i] = 0.0;
 
-		if (!fired[i] || effect->value_enum < 0)
+		if (!fired[i] || effect->value_enum < 0 || (uint32_t) effect->value_enum >= rbs->value_count)
 		{
 			fired[i] = false;
 			continue;
@@ -212,7 +206,7 @@ void rbs_step(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count,
 		}
 		for (const int32_t* fact = rules[i].then_facts; *fact != 0; ++fact)
 		{
-			rbs_set_fact(rbs->facts, *fact);
+			rbs_set_fact(rbs->facts, rbs->token_count, *fact);
 		}
 	}
 
@@ -223,6 +217,6 @@ void rbs_step(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count,
 			continue;
 		}
 		rbs->memory[(size_t) effects[i].value_enum] = results[i];
-		rbs_set_fact(rbs->facts, rbs_invert_token(effects[i].trigger_fact_enum));
+		rbs_set_fact(rbs->facts, rbs->token_count, rbs_invert_token(effects[i].trigger_fact_enum));
 	}
 }
