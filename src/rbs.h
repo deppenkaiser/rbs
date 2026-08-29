@@ -65,8 +65,6 @@ void rbs_set_fact(int32_t* facts, int32_t fact);
 void rbs_initialize_memory(memory_t memory, uint32_t value_count);
 bool rbs_compare(memory_t memory, int32_t value, enum operation op, double operand);
 bool rbs_term_is_true(struct rbs* rbs, rbs_term_t term);
-void rbs_fire(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count);
-void rbs_apply_effects(struct rbs* rbs, const rbs_effect_t effects, size_t effect_count);
 /* Schritt-Semantik: wertet ALLE Regeln und Effekte gegen dieselbe
  * Faktenbasis (und denselben Speicherstand) aus. Abgeleitete Fakten und
  * Aenderungen werden erst am Ende des Schritts committed und wirken damit

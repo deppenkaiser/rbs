@@ -1,3 +1,10 @@
+/* rbs_effects_test.c — Regressions-Test fuer Schritt-Effekte (rbs_step).
+ * Validiert: alle Effekte eines gemeinsamen Triggers feuern, Trigger wird
+ * genau einmal invertiert, Ergebnisse stammen vom unveraenderten Basis-Stand
+ * (Snapshots, keine Sequenz-Kette), und nach dem Konsumieren feuert nichts
+ * mehr.
+ * Stil: assert-basiert, kein externes Framework.
+ */
 #include "rbs.h"
 #include <assert.h>
 #include <stdio.h>
@@ -27,15 +34,26 @@ int main(void) {
     };
 
     struct rbs r = { facts, mem };
-    rbs_apply_effects(&r, effects, 5);
+
+    /* Ein Schritt: alle Effekte rechnen vom unveraenderten Basis-Stand
+     * (M2: einmal 10*2=20 und einmal 10*3=30, zuletzt geschrieben -> 30),
+     * der gemeinsame Trigger wird genau einmal invertiert (N_T1). */
+    rbs_step(&r, NULL, 0, effects, 5);
 
     assert(mem[M0] == 15.0);
     assert(mem[M1] == 7.0);
-    assert(mem[M2] == 60.0);
+    assert(mem[M2] == 30.0);
     assert(mem[M3] == 2.5);
 
     assert(!rbs_is_fact(facts, T1));
     assert(rbs_is_fact(facts, N_T1));
+
+    /* Nach dem Konsumieren feuert im naechsten Schritt kein Effekt mehr. */
+    rbs_step(&r, NULL, 0, effects, 5);
+    assert(mem[M0] == 15.0);
+    assert(mem[M1] == 7.0);
+    assert(mem[M2] == 30.0);
+    assert(mem[M3] == 2.5);
 
     printf("rbs_effects_test: ALLE TESTS OK\n");
 

@@ -57,18 +57,21 @@ int main(void)
 	rbs_set_fact(NULL, T1);
 	rbs_set_fact(facts, Z);
 
-	/* DIV-by-0-Guard: Effekt mit operand 0 wird uebersprungen, kein Crash. */
+	/* DIV-by-0-Guard: Effekt mit operand 0 wird uebersprungen, kein Crash,
+	 * Trigger bleibt aktiv (nicht konsumiert). */
 	rbs_set_fact(facts, T1);
 	memory_t mem = rbs_create_memory_buffer(1);
 	assert(mem != NULL);
 	struct rbs_effect div0 = { .trigger_fact_enum = T1, .value_enum = 0, .op = DIV, .operand = 0.0 };
 	struct rbs_effect effects[] = { div0 };
 	struct rbs r = { .facts = facts, .memory = mem };
-	rbs_apply_effects(&r, effects, 1);
+	rbs_step(&r, NULL, 0, effects, 1);
+	assert(mem[0] == 0.0);
+	assert(rbs_is_fact(facts, T1));
 
 	/* NULL-memory-Guard: kein Crash. */
 	r.memory = NULL;
-	rbs_apply_effects(&r, effects, 1);
+	rbs_step(&r, NULL, 0, effects, 1);
 
 	rbs_destroy_memory_buffer(&mem);
 	rbs_destroy_facts_buffer(&facts);

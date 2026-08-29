@@ -134,42 +134,14 @@ bool rbs_term_is_true(struct rbs* rbs, rbs_term_t term)
 	return rbs_is_fact(rbs->facts, term->fact_enum);
 }
 
-void rbs_fire(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count)
-{
-	if (rbs == NULL || rules == NULL)
-	{
-		return;
-	}
-
-	for (size_t i = 0; i < rule_count; ++i)
-	{
-		const rbs_rule_t rule = &rules[i];
-		bool matches = true;
-
-		for (rbs_term_t term = rule->if_terms; !(term->fact_enum == 0 && !term->comparison); ++term)
-		{
-			if (!rbs_term_is_true(rbs, term))
-			{
-				matches = false;
-				break;
-			}
-		}
-
-		if (matches)
-		{
-			for (const int32_t* fact = rule->then_facts; *fact != 0; ++fact)
-			{
-				rbs_set_fact(rbs->facts, *fact);
-			}
-		}
-	}
-}
-
 void rbs_step(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count,
               const rbs_effect_t effects, size_t effect_count)
 {
-	if (rbs == NULL || rules == NULL || effects == NULL ||
-	    rbs->facts == NULL || rbs->memory == NULL)
+	if (rbs == NULL || rbs->facts == NULL || rbs->memory == NULL)
+	{
+		return;
+	}
+	if ((rule_count > 0 && rules == NULL) || (effect_count > 0 && effects == NULL))
 	{
 		return;
 	}
@@ -252,60 +224,5 @@ void rbs_step(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count,
 		}
 		rbs->memory[(size_t) effects[i].value_enum] = results[i];
 		rbs_set_fact(rbs->facts, rbs_invert_token(effects[i].trigger_fact_enum));
-	}
-}
-
-void rbs_apply_effects(struct rbs* rbs, const rbs_effect_t effects, size_t effect_count)
-{
-	if (rbs == NULL || effects == NULL || rbs->memory == NULL)
-	{
-		return;
-	}
-
-	/* Puffer fuer die auszuloesenden Trigger (ein Eintrag pro Effekt). */
-	size_t staged[effect_count];
-	size_t staged_count = 0;
-
-	for (size_t i = 0; i < effect_count; ++i)
-	{
-		const rbs_effect_t effect = &effects[i];
-
-		if (!rbs_is_fact(rbs->facts, effect->trigger_fact_enum))
-		{
-			continue;
-		}
-
-		double result = rbs->memory[(size_t) effect->value_enum];
-
-		switch (effect->op)
-		{
-			case ADD: result += effect->operand; break;
-			case SUB: result -= effect->operand; break;
-			case MUL: result *= effect->operand; break;
-			case DIV: if (effect->operand == 0.0) continue; result /= effect->operand; break;
-			default: break;
-		}
-
-		rbs->memory[(size_t) effect->value_enum] = result;
-		staged[staged_count++] = effect->trigger_fact_enum;
-	}
-
-	/* Neue Fakten erst am Loop-Ende setzen: alle Effekte feuern auf derselben
-	 * Faktenbasis; jeder ausgeloeste Trigger wird danach genau einmal invertiert. */
-	for (size_t i = 0; i < staged_count; ++i)
-	{
-		bool already = false;
-		for (size_t j = 0; j < i; ++j)
-		{
-			if (staged[j] == staged[i])
-			{
-				already = true;
-				break;
-			}
-		}
-		if (!already)
-		{
-			rbs_set_fact(rbs->facts, rbs_invert_token(staged[i]));
-		}
 	}
 }
