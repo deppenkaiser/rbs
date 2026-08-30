@@ -73,10 +73,11 @@ bool app_handle_wet(sm_state_t next_state, void* user_data);
 bool app_handle_adult(sm_state_t next_state, void* user_data);
 /* Schritt-Callback: liefert je Schritt eine Zeile (Step-Grenze/Status). */
 void app_on_step(rbs_sm_t fsm, uint32_t tick);
-/* Konstruktor: baut die initiale Welt vor der Zustandsschleife auf. */
-bool app_start(sm_state_t next_state, void* user_data);
-/* Destruktor: bilanziert die Endfakten nach Terminierung der Schleife. */
-bool app_stop(sm_state_t next_state, void* user_data);
+
+/* Der Konstruktor/Destruktor der App-FSM ist der sm-Lebenszyklus-Callback
+ * (sm_on_start/sm_on_stop), deklariert in <sm/sm.h> und in main.c als
+ * `callback` ueberschrieben. Dort laeuft er im Worker-Thread ganz am Anfang
+ * (z. B. Speicherverwaltung/Ressourcen) bzw. ganz am Ende. */
 
 /* --- Regeln --- */
 

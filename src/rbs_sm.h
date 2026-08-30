@@ -25,12 +25,6 @@ typedef struct rbs_sm
 	/* Optional: wird nach jedem Schritt mit der Schrittnummer aufgerufen
 	 * (z. B. um die Step-Grenze in der Konsole zu markieren). */
 	void (*on_step)(struct rbs_sm* fsm, uint32_t tick);
-	/* Optional: Konstruktor/Destruktor der App-FSM. start_handler loesst
-	 * die Zustandsschleife aus (genau einmal, bevor der erste Schritt
-	 * laeuft); stop_handler wird danach genau einmal gerufen, nachdem die
-	 * Schleife terminiert ist (Rueckgabe true/false bzw. kein Marker). */
-	sm_state_handler_t start_handler;
-	sm_state_handler_t stop_handler;
 	uint32_t ticks;
 }* rbs_sm_t;
 

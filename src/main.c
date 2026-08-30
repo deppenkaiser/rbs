@@ -44,29 +44,29 @@ bool app_handle_adult(sm_state_t next_state, void* user_data)
 	return false;
 }
 
-/* Konstruktor: laeuft genau einmal vor der Zustandsschleife und baut die
- * initiale Welt auf — hier: die externe Ausgangslage (es regnet und ist
- * bewoelkt). Danach uebernimmt die Regel-Engine. */
-bool app_start(sm_state_t next_state, void* user_data)
+/* Konstruktor (sm-Lebenszyklus-Callback): laeuft ganz am Anfang des
+ * Worker-Threads und baut die initiale Welt auf — hier: die externe
+ * Ausgangslage (es regnet und ist bewoelkt). Danach uebernimmt die
+ * Regel-Engine. Der Konstruktor kann auch Ressourcen/Speicher anlegen. */
+callback void sm_on_start(sm_core_t core)
 {
-	rbs_sm_t fsm = (rbs_sm_t) user_data;
-	(void) next_state;
+	rbs_sm_t fsm = (rbs_sm_t) core->user_data;
 
 	logging_log_message("app: fsm startet (wetter: es regnet und ist bewoelkt)");
 	rbs_set_fact(fsm->rbs->facts, fsm->rbs->token_count, RAIN);
 	rbs_set_fact(fsm->rbs->facts, fsm->rbs->token_count, CLOUDY);
-	return true;
 }
 
-/* Destruktor: laeuft genau einmal, nachdem die Schleife terminiert ist. */
-bool app_stop(sm_state_t next_state, void* user_data)
+/* Destruktor (sm-Lebenszyklus-Callback): laeuft ganz am Ende des
+ * Worker-Threads, nachdem die Schleife terminiert ist. Hier z. B. die
+ * Endfakten bilanzieren und Ressourcen/Speicher freigeben. */
+callback void sm_on_stop(sm_core_t core)
 {
-	rbs_sm_t fsm = (rbs_sm_t) user_data;
-	(void) next_state;
+	rbs_sm_t fsm = (rbs_sm_t) core->user_data;
+
 	logging_log_message(rbs_is_fact(fsm->rbs->facts, fsm->rbs->token_count, UMBRELLA) ?
 	                    "app: UMBRELLA ist gesetzt (fsm beendet)" :
 	                    "app: UMBRELLA NICHT gesetzt");
-	return true;
 }
 
 int main()
@@ -88,8 +88,8 @@ int main()
 	rbs.memory[AGE] = 20;
 	rbs.memory[MONEY] = 100;
 
-	/* Die initiale Welt (Regen + Bewoelkung) baut der start_handler auf.
-	 * AGE/MONEY sind Konstanten der Sim-Welt und bleiben hier. */
+	/* Die initiale Welt (Regen + Bewoelkung) baut der sm_on_start-Konstruktor
+	 * auf. AGE/MONEY sind Konstanten der Sim-Welt und bleiben hier. */
 
 	struct rbs_sm fsm =
 	{
@@ -101,8 +101,6 @@ int main()
 		.slots = app_slots,
 		.slot_count = sizeof(app_slots) / sizeof(app_slots[0]),
 		.on_step = app_on_step,
-		.start_handler = app_start,
-		.stop_handler = app_stop,
 	};
 
 	rbs_sm_run(&fsm);
