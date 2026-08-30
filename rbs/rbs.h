@@ -66,6 +66,10 @@ void rbs_destroy_memory_buffer(memory_t* pmemory);
 void rbs_initialize_facts(int32_t* facts, uint32_t token_count);
 bool rbs_is_fact(int32_t* facts, uint32_t token_count, int32_t fact);
 void rbs_set_fact(int32_t* facts, uint32_t token_count, int32_t fact);
+/* Wie rbs_set_fact, aber mit Zugriff auf das struct rbs (fact_names) und
+ * Loggt eine Zeile, die klar macht, was gesetzt wurde (ueber names, fallback
+ * Roh-Zahl), inkl. Vorzeichen (aktiv/negiert). */
+void rbs_set_fact_named(struct rbs* rbs, int32_t fact);
 void rbs_initialize_memory(memory_t memory, uint32_t value_count);
 bool rbs_compare(memory_t memory, uint32_t value_count, int32_t value, enum operation op, double operand);
 bool rbs_term_is_true(struct rbs* rbs, rbs_term_t term);

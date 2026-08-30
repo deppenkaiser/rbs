@@ -84,6 +84,46 @@ void rbs_set_fact(int32_t* facts, uint32_t token_count, int32_t fact)
     facts[magnitude - 1] = fact;
 }
 
+void rbs_set_fact_named(struct rbs* rbs, int32_t fact)
+{
+    if (rbs == NULL)
+    {
+        return;
+    }
+    rbs_set_fact(rbs->facts, rbs->token_count, fact);
+    if (rbs->facts == NULL || fact == 0)
+    {
+        return;
+    }
+
+    uint32_t magnitude = fact < 0 ? (uint32_t) -fact : (uint32_t) fact;
+    if (magnitude >= rbs->token_count)
+    {
+        return;
+    }
+
+    const char* name = NULL;
+    if (rbs->fact_names && rbs->fact_names_count > 0 &&
+        magnitude > 0 && magnitude <= rbs->fact_names_count)
+    {
+        name = rbs->fact_names[magnitude - 1];
+    }
+
+    char buf[160];
+    int pos = 0;
+    if (name && name[0] != '\0')
+    {
+        pos = snprintf(buf, sizeof(buf), "rbs_set_fact: %s", name);
+    }
+    else
+    {
+        pos = snprintf(buf, sizeof(buf), "rbs_set_fact: Fakt %d", fact);
+    }
+    snprintf(buf + pos, sizeof(buf) - pos, " (%s)",
+             fact > 0 ? "aktiv" : "negiert");
+    logging_log_message(buf);
+}
+
 void rbs_initialize_memory(memory_t memory, uint32_t value_count)
 {
     if (memory == NULL)
