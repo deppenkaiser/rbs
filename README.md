@@ -34,7 +34,7 @@ Ein Programm in diesem Muster ist damit selbst das Modell seiner Zustände und
 | Schicht | Bibliothek | Aufgabe |
 |---|---|---|
 | `rbs` | diese Engine | Faktenbasis, Memory, Regeln (Guards → then/else-Fakten), Effekte (Memory-Ops) |
-| `rbs_sm` | hier enthalten | RBS-Schritte + Routing des ersten aktiven Slots auf Handler; FSM-Lebenszyklus (start/stop) |
+| `rbs_sm` | hier enthalten | RBS-Schritte + Routing des ersten aktiven Slots auf Handler; `on_step`-Schritt-Callback |
 | `sm` | `libraries/sm` | minimal-threaded State-Machine (Handler-Schleife) |
 | `threading` | `libraries/threading` | Thread-Erzeugung/-Joining für `sm` |
 
