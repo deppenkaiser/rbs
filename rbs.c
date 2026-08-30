@@ -53,35 +53,20 @@ void rbs_initialize_facts(int32_t* facts, uint32_t token_count)
 
 bool rbs_is_fact(int32_t* facts, uint32_t token_count, int32_t fact)
 {
-    if (facts == NULL || fact == 0)
-    {
-        return false;
-    }
-
     uint32_t magnitude = fact < 0 ? (uint32_t) -fact : (uint32_t) fact;
-    if (magnitude >= token_count)
-    {
-        return false;
-    }
-
-    bool is_positiv = fact > 0;
-    return facts[magnitude - 1] == fact;
+    bool valid = (facts != NULL) && (fact != 0) && (magnitude < token_count);
+    return valid && (facts[magnitude - 1] == fact);
 }
 
 void rbs_set_fact(int32_t* facts, uint32_t token_count, int32_t fact)
 {
-    if (facts == NULL || fact == 0)
-    {
-        return;
-    }
-
     uint32_t magnitude = fact < 0 ? (uint32_t) -fact : (uint32_t) fact;
-    if (magnitude >= token_count)
-    {
-        return;
-    }
+    bool valid = (facts != NULL) && (fact != 0) && (magnitude < token_count);
 
-    facts[magnitude - 1] = fact;
+    if (valid)
+    {
+        facts[magnitude - 1] = fact;
+    }
 }
 
 void rbs_set_fact_named(struct rbs* rbs, int32_t fact)
@@ -90,20 +75,14 @@ void rbs_set_fact_named(struct rbs* rbs, int32_t fact)
     {
         return;
     }
+
     rbs_set_fact(rbs->facts, rbs->token_count, fact);
-    if (rbs->facts == NULL || fact == 0)
-    {
-        return;
-    }
 
     uint32_t magnitude = fact < 0 ? (uint32_t) -fact : (uint32_t) fact;
-    if (magnitude >= rbs->token_count)
-    {
-        return;
-    }
+    bool valid = (rbs->facts != NULL) && (fact != 0) && (magnitude < rbs->token_count);
 
     const char* name = NULL;
-    if (rbs->fact_names && rbs->fact_names_count > 0 &&
+    if (valid && rbs->fact_names && rbs->fact_names_count > 0 &&
         magnitude > 0 && magnitude <= rbs->fact_names_count)
     {
         name = rbs->fact_names[magnitude - 1];
@@ -136,59 +115,58 @@ void rbs_initialize_memory(memory_t memory, uint32_t value_count)
 
 bool rbs_compare(memory_t memory, uint32_t value_count, int32_t value, enum operation op, double operand)
 {
-    if (memory == NULL || value < 0 || (uint32_t) value >= value_count)
-    {
-        return false;
-    }
-
-    double lhs = memory[(size_t) value];
+    bool valid = (memory != NULL) && (value >= 0) && ((uint32_t) value < value_count);
+    double lhs = valid ? memory[(size_t) value] : 0.0;
     int32_t op_value = op;
 
+    bool result = false;
     switch (op_value)
     {
-        case EQ: return lhs == operand;
-        case NE: return lhs != operand;
-        case LT: return lhs < operand;
-        case LE: return lhs <= operand;
-        case GT: return lhs > operand;
-        case GE: return lhs >= operand;
-        default: return false;
+        case EQ: result = lhs == operand; break;
+        case NE: result = lhs != operand; break;
+        case LT: result = lhs < operand; break;
+        case LE: result = lhs <= operand; break;
+        case GT: result = lhs > operand; break;
+        case GE: result = lhs >= operand; break;
+        default: result = false; break;
     }
+    return valid && result;
 }
 
 bool rbs_term_is_true(struct rbs* rbs, rbs_term_t term)
 {
-    if (rbs == NULL || term == NULL)
+    bool result = false;
+    if (rbs != NULL && term != NULL)
     {
-        return false;
+        if (term->comparison)
+        {
+            result = rbs_compare(rbs->memory, rbs->value_count, term->value_enum, term->op, term->operand);
+        }
+        else
+        {
+            result = rbs_is_fact(rbs->facts, rbs->token_count, term->fact_enum);
+        }
     }
-
-    if (term->comparison)
-    {
-        return rbs_compare(rbs->memory, rbs->value_count, term->value_enum, term->op, term->operand);
-    }
-    return rbs_is_fact(rbs->facts, rbs->token_count, term->fact_enum);
+    return result;
 }
 
 static void set_fact_if_changed(int32_t* facts, uint32_t token_count, int32_t fact, int32_t* changed, size_t* changed_count)
 {
-    if (facts == NULL || fact == 0)
-    {
-        return;
-    }
     uint32_t magnitude = fact < 0 ? (uint32_t) -fact : (uint32_t) fact;
-    if (magnitude >= token_count || magnitude == 0)
+    bool valid = (facts != NULL) && (fact != 0) &&
+                 (magnitude < token_count) && (magnitude != 0);
+
+    if (valid)
     {
-        return;
-    }
-    uint32_t idx = magnitude - 1;
-    if (facts[idx] != fact)
-    {
-        facts[idx] = fact;
-        if (changed && changed_count && *changed_count < 256)
+        uint32_t idx = magnitude - 1;
+        if (facts[idx] != fact)
         {
-            changed[*changed_count] = fact;
-            (*changed_count)++;
+            facts[idx] = fact;
+            if (changed && changed_count && *changed_count < 256)
+            {
+                changed[*changed_count] = fact;
+                (*changed_count)++;
+            }
         }
     }
 }
@@ -196,11 +174,10 @@ static void set_fact_if_changed(int32_t* facts, uint32_t token_count, int32_t fa
 void rbs_step(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count,
               const rbs_effect_t effects, size_t effect_count)
 {
-    if (rbs == NULL || rbs->facts == NULL || rbs->memory == NULL)
-    {
-        return;
-    }
-    if ((rule_count > 0 && rules == NULL) || (effect_count > 0 && effects == NULL))
+    bool valid = (rbs != NULL) && (rbs->facts != NULL) && (rbs->memory != NULL) &&
+                 (rule_count == 0 || rules != NULL) &&
+                 (effect_count == 0 || effects != NULL);
+    if (!valid)
     {
         return;
     }
