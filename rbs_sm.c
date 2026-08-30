@@ -23,43 +23,42 @@ bool _rbs_sm_entry(sm_state_t current, void* user_data)
 
 bool rbs_sm_advance(rbs_sm_t fsm, sm_state_t current)
 {
-	if (fsm == NULL || current == NULL || fsm->rbs == NULL)
-	{
-		return false;
-	}
+	bool ok = (fsm != NULL) && (current != NULL) && (fsm->rbs != NULL);
+	bool found = false;
 
-	/* Ein Schritt: alle Regeln + Effekte auf derselben Basis, Commit erst
-	 * am Schritt-Ende. Das RBS bestimmt so die Ziel-Zustaende. */
-	rbs_step(fsm->rbs, fsm->rules, fsm->rule_count,
-	         fsm->effects, fsm->effect_count);
-	fsm->ticks++;
-
-	if (fsm->on_step != NULL)
+	if (ok)
 	{
-		fsm->on_step(fsm, fsm->ticks);
-	}
+		/* Ein Schritt: alle Regeln + Effekte auf derselben Basis, Commit erst
+		 * am Schritt-Ende. Das RBS bestimmt so die Ziel-Zustaende. */
+		rbs_step(fsm->rbs, fsm->rules, fsm->rule_count,
+		         fsm->effects, fsm->effect_count);
+		fsm->ticks++;
 
-	/* Aktiven Zustand ueber die Faktenbasis ermitteln und umschalten. */
-	for (size_t i = 0; i < fsm->slot_count; ++i)
-	{
-		if (fsm->slots[i].fact != 0 &&
-		    rbs_is_fact(fsm->rbs->facts, fsm->rbs->token_count, fsm->slots[i].fact))
+		if (fsm->on_step != NULL)
 		{
-			current->state_function = fsm->slots[i].handler;
-			return true;
+			fsm->on_step(fsm, fsm->ticks);
+		}
+
+		/* Aktiven Zustand ueber die Faktenbasis ermitteln und umschalten. */
+		for (size_t i = 0; i < fsm->slot_count && !found; ++i)
+		{
+			if (fsm->slots[i].fact != 0 &&
+			    rbs_is_fact(fsm->rbs->facts, fsm->rbs->token_count, fsm->slots[i].fact))
+			{
+				current->state_function = fsm->slots[i].handler;
+				found = true;
+			}
 		}
 	}
 
-	return false; /* kein Zustands-Marker aktiv -> FSM beendet */
+	return found; /* true = Zustand umgeschaltet; sonst FSM beendet */
 }
 
 void rbs_sm_run(rbs_sm_t fsm)
 {
-	if (fsm == NULL)
+	if (fsm != NULL)
 	{
-		return;
+		struct sm_state init = {.state_function = _rbs_sm_entry};
+		sm_run(&init, fsm);
 	}
-
-	struct sm_state init = {.state_function = _rbs_sm_entry};
-	sm_run(&init, fsm);
 }
