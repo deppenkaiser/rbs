@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
+
 project(rbs LANGUAGES C)
+
+include_guard(GLOBAL)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -12,26 +15,27 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-add_executable(rbs)
-add_subdirectory(../../libraries/sm ${CMAKE_BINARY_DIR}/sm)
-add_subdirectory(../../libraries/logging ${CMAKE_BINARY_DIR}/logging)
-add_subdirectory(../../libraries/api ${CMAKE_BINARY_DIR}/api)
+add_library(rbs STATIC)
+add_subdirectory(../sm ${CMAKE_BINARY_DIR}/sm_from_rbs)
+add_subdirectory(../logging ${CMAKE_BINARY_DIR}/logging_from_rbs)
+add_subdirectory(../api ${CMAKE_BINARY_DIR}/api_from_rbs)
 
 target_sources(rbs PRIVATE
-	src/main.c
-	src/app.c
-	src/rbs.c
-	src/rbs_sm.c
+	rbs.c
+	rbs_sm.c
 )
 
-target_include_directories(rbs PRIVATE
-	../../libraries
+# Include-Root auf den rbs-Repo-Pfad, damit "<rbs/rbs.h>" und
+# "<rbs/rbs_sm.h>" aus allen Konsumenten (z. B. rbs_demo) auflösen.
+# Die transitiven Includes (<sm/sm.h>, <logging/logging.h>) liefern die
+# PUBLIC-Links auf sm/logging.
+target_include_directories(rbs PUBLIC
+	${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_link_libraries(rbs
 	PUBLIC
 		m
-		api
 		sm
 		logging
 )
@@ -40,77 +44,21 @@ target_link_libraries(rbs
 enable_testing()
 
 add_executable(rbs_test)
-
-target_sources(rbs_test PRIVATE
-	test/test_rbs.c
-	src/rbs.c
-)
-
-target_include_directories(rbs_test PRIVATE
-	src
-	../../libraries
-)
-
-target_link_libraries(rbs_test PRIVATE logging)
-
+target_sources(rbs_test PRIVATE test/test_rbs.c)
+target_link_libraries(rbs_test PRIVATE rbs logging)
 add_test(NAME rbs_test COMMAND rbs_test)
 
-# --- Test für Effekt-Staging-Semantik (gemeinsamer Trigger feuert alle Effekte) ---
 add_executable(rbs_effects_test)
-
-target_sources(rbs_effects_test PRIVATE
-	test/test_effects.c
-	src/rbs.c
-)
-
-target_include_directories(rbs_effects_test PRIVATE
-	src
-	../../libraries
-)
-
-target_link_libraries(rbs_effects_test PRIVATE logging)
-
+target_sources(rbs_effects_test PRIVATE test/test_effects.c)
+target_link_libraries(rbs_effects_test PRIVATE rbs logging)
 add_test(NAME rbs_effects_test COMMAND rbs_effects_test)
 
-# --- Test für die rbs_sm-State-Machine (Marker-Routing + externer Fakt-Reset) ---
 add_executable(rbs_sm_test)
-
-target_sources(rbs_sm_test PRIVATE
-	test/test_rbs_sm.c
-	src/rbs.c
-	src/rbs_sm.c
-)
-
-# rbs_sm.c ruft sm_run(); sm zieht threading/string transitiv mit.
-target_include_directories(rbs_sm_test PRIVATE
-	src
-	../../libraries
-)
-
-target_link_libraries(rbs_sm_test
-	PUBLIC
-		m
-		sm
-		logging
-)
-
+target_sources(rbs_sm_test PRIVATE test/test_rbs_sm.c)
+target_link_libraries(rbs_sm_test PRIVATE rbs logging)
 add_test(NAME rbs_sm_test COMMAND rbs_sm_test)
 
-# --- Test für die else-Zweige (rbs_rule.else_facts + Persistenz) ---
 add_executable(rbs_else_test)
-
-target_sources(rbs_else_test PRIVATE
-	test/test_else.c
-	src/rbs.c
-)
-
-target_include_directories(rbs_else_test PRIVATE
-	src
-	../../libraries
-)
-
-target_link_libraries(rbs_else_test PRIVATE logging)
-
+target_sources(rbs_else_test PRIVATE test/test_else.c)
+target_link_libraries(rbs_else_test PRIVATE rbs logging)
 add_test(NAME rbs_else_test COMMAND rbs_else_test)
-
-

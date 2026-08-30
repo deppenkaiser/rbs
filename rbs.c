@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <stdio.h>
-#include "rbs.h"
+#include "rbs/rbs.h"
 
 int32_t rbs_invert_token(int32_t token)
 {

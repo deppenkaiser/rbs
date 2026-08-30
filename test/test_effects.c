@@ -5,7 +5,7 @@
  * jedem Schritt, bis der Trigger explizit zurueckgesetzt wird.
  * Stil: assert-basiert, kein externes Framework.
  */
-#include "rbs.h"
+#include <rbs/rbs.h>
 #include <assert.h>
 #include <stdio.h>
 

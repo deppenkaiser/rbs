@@ -5,7 +5,7 @@
  * value_enum >= value_count).
  * Stil: assert-basiert, kein externes Framework, int32-Stil wie rbs.c.
  */
-#include "rbs.h"
+#include <rbs/rbs.h>
 
 #include <assert.h>
 #include <stdio.h>

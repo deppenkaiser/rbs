@@ -40,36 +40,41 @@ Ein Programm in diesem Muster ist damit selbst das Modell seiner Zustände und
 
 ## Lebenszyklus der App-FSM (`rbs_sm`)
 
-Die App-State-Machine kennt drei Phasen, die durch optionale Handler im
-`struct rbs_sm` gesetzt werden:
+Die App-State-Machine kennt drei Phasen. Der **Konstruktor** und der
+**Destruktor** sind die sm-Lebenszyklus-Callbacks `sm_on_start`/`sm_on_stop`
+(weak, kommen aus der `api`-Muster-Bibliothek) und laufen im Worker-Thread
+ganz am Anfang bzw. Ende; dazwischen läuft die Zustandsschleife. Der
+`on_step`-Slot ist ein Schritt-Callback im `struct rbs_sm`.
 
-| Feld | Phase | Aufgabe |
+| Schicht | Phase | Aufgabe |
 |---|---|---|
-| `start_handler` | **Konstruktor** | läuft genau einmal vor der Zustandsschleife und baut die **initiale Welt** auf (externe Ausgangslage, z. B. Regen/Bewölkung setzen) |
+| `sm_on_start` | **Konstruktor** | läuft genau einmal vor der Zustandsschleife, legt Ressourcen (z. B. die rbs-Buffer) an und baut die **initiale Welt** auf |
 | `on_step` | Schritt-Callback | wird je Schritt mit der Schrittnummer aufgerufen (z. B. Step-Grenze in der Konsole) |
-| `stop_handler` | **Destruktor** | läuft genau einmal nach Terminierung der Schleife, z. B. zur Bilanz der Endfakten |
+| `sm_on_stop` | **Destruktor** | läuft genau einmal nach Terminierung der Schleife, bilanziert Endfakten und gibt Ressourcen frei |
 
 ```c
+callback void sm_on_start(sm_core_t core) { /* Ressourcen + Welt aufbauen */ }
+callback void sm_on_stop(sm_core_t core)  { /* Endfakten bilanzieren, Ressourcen freigeben */ }
+
 struct rbs_sm fsm = {
     .slots = slots, .slot_count = ...,
     .on_step = _app_on_step,
-    .start_handler = _app_start,   /* Konstruktor: Welt aufbauen */
-    .stop_handler  = _app_stop,    /* Destruktor:  Endfakten bilanzieren */
 };
 rbs_sm_run(&fsm);
 ```
 
-Damit wird die Faktenbasis vollständig aus den Lebenszyklus-Handlern versorgt:
-der Konstruktor stellt die Ausgangslage bereit, die Slot-Handler liefern
-laufenden externen Input (z. B. Wettersensor), der Destruktor bilanziert das
-Ergebnis. `main` selbst speist dann keine Fakten mehr ein, sondern nur
-Welt-Konstanten (z. B. `AGE`/`MONEY`).
+Damit wird die Faktenbasis vollständig aus den Lebenszyklus-Callbacks
+versorgt: der Konstruktor stellt die Ausgangslage und den Speicher bereit,
+die Slot-Handler liefern laufenden externen Input (z. B. Wettersensor), der
+Destruktor bilanziert das Ergebnis. Die Demo-Anwendung dafür liegt im
+separaten Projekt **`rbs_demo`**.
 
 ## Nutzung
 
 ```c
-#include <sm/sm.h>   /* Bibliotheken immer mit spitzen Klammern */
-#include "rbs.h"
+#include <rbs/rbs.h>     /* Bibliotheken immer mit spitzen Klammern */
+#include <rbs/rbs_sm.h>
+#include <sm/sm.h>
 
 struct rbs_term if_adult[] = { { .comparison = true, .value_enum = AGE, .op = GT, .operand = 18 }, { .comparison = false, .fact_enum = ZERO } };
 enum token then_adult[] = { ADULT, PAY, ZERO };
@@ -93,8 +98,9 @@ cmake --build build
 ctest --test-dir build
 ```
 
-Kern + Tests kommen ohne externe Abhängigkeiten aus; `main.c` (Demo-App)
-zeigt als Beispiel Wetter- und Erwachsenen-Token mit Ausgabe je Schritt.
+Kern + Tests kommen ohne externe Abhängigkeiten aus; eine Beispiel-App, die
+Regeln, Effekte und die Lebenszyklus-Callbacks einsetzt, liegt im separaten
+Projekt **`rbs_demo`**.
 
 ## Wiki
 

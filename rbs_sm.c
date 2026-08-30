@@ -1,4 +1,4 @@
-#include "rbs_sm.h"
+#include "rbs/rbs_sm.h"
 
 void rbs_sm_init(rbs_sm_t fsm, struct rbs* rbs,
                  const rbs_rule_t rules, size_t rule_count,

@@ -6,8 +6,8 @@
  * Endzustand (Handler liefert false).
  * Stil: assert-basiert, kein externes Framework.
  */
-#include "rbs.h"
-#include "rbs_sm.h"
+#include <rbs/rbs.h>
+#include <rbs/rbs_sm.h>
 
 #include <assert.h>
 #include <stdio.h>

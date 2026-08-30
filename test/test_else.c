@@ -4,7 +4,7 @@
  * expliziten Zuruecksetzen (kein Auto-Konsum).
  * Stil: assert-basiert, kein externes Framework.
  */
-#include "rbs.h"
+#include <rbs/rbs.h>
 #include <assert.h>
 #include <stdio.h>
 
