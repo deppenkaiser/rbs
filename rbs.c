@@ -40,14 +40,12 @@ void rbs_destroy_memory_buffer(memory_t* pmemory)
 
 void rbs_initialize_facts(int32_t* facts, uint32_t token_count)
 {
-    if (facts == NULL)
+    if (facts != NULL)
     {
-        return;
-    }
-
-    for (uint32_t i = 1; i < token_count; ++i)
-    {
-        facts[i - 1] = rbs_invert_token(i);
+        for (uint32_t i = 1; i < token_count; ++i)
+        {
+            facts[i - 1] = rbs_invert_token(i);
+        }
     }
 }
 
@@ -71,46 +69,42 @@ void rbs_set_fact(int32_t* facts, uint32_t token_count, int32_t fact)
 
 void rbs_set_fact_named(struct rbs* rbs, int32_t fact)
 {
-    if (rbs == NULL)
+    if (rbs != NULL)
     {
-        return;
-    }
+        rbs_set_fact(rbs->facts, rbs->token_count, fact);
 
-    rbs_set_fact(rbs->facts, rbs->token_count, fact);
+        uint32_t magnitude = fact < 0 ? (uint32_t) -fact : (uint32_t) fact;
+        bool valid = (rbs->facts != NULL) && (fact != 0) && (magnitude < rbs->token_count);
 
-    uint32_t magnitude = fact < 0 ? (uint32_t) -fact : (uint32_t) fact;
-    bool valid = (rbs->facts != NULL) && (fact != 0) && (magnitude < rbs->token_count);
+        const char* name = NULL;
+        if (valid && rbs->fact_names && rbs->fact_names_count > 0 &&
+            magnitude > 0 && magnitude <= rbs->fact_names_count)
+        {
+            name = rbs->fact_names[magnitude - 1];
+        }
 
-    const char* name = NULL;
-    if (valid && rbs->fact_names && rbs->fact_names_count > 0 &&
-        magnitude > 0 && magnitude <= rbs->fact_names_count)
-    {
-        name = rbs->fact_names[magnitude - 1];
+        char buf[160];
+        int pos = 0;
+        if (name && name[0] != '\0')
+        {
+            pos = snprintf(buf, sizeof(buf), "rbs_set_fact: %s", name);
+        }
+        else
+        {
+            pos = snprintf(buf, sizeof(buf), "rbs_set_fact: Fakt %d", fact);
+        }
+        snprintf(buf + pos, sizeof(buf) - pos, " (%s)",
+                 fact > 0 ? "aktiv" : "negiert");
+        logging_log_message(buf);
     }
-
-    char buf[160];
-    int pos = 0;
-    if (name && name[0] != '\0')
-    {
-        pos = snprintf(buf, sizeof(buf), "rbs_set_fact: %s", name);
-    }
-    else
-    {
-        pos = snprintf(buf, sizeof(buf), "rbs_set_fact: Fakt %d", fact);
-    }
-    snprintf(buf + pos, sizeof(buf) - pos, " (%s)",
-             fact > 0 ? "aktiv" : "negiert");
-    logging_log_message(buf);
 }
 
 void rbs_initialize_memory(memory_t memory, uint32_t value_count)
 {
-    if (memory == NULL)
+    if (memory != NULL)
     {
-        return;
+        memset(memory, 0, value_count * sizeof(double));
     }
-
-    memset(memory, 0, value_count * sizeof(double));
 }
 
 bool rbs_compare(memory_t memory, uint32_t value_count, int32_t value, enum operation op, double operand)
@@ -177,113 +171,111 @@ void rbs_step(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count,
     bool valid = (rbs != NULL) && (rbs->facts != NULL) && (rbs->memory != NULL) &&
                  (rule_count == 0 || rules != NULL) &&
                  (effect_count == 0 || effects != NULL);
-    if (!valid)
+    if (valid)
     {
-        return;
-    }
+        bool matched[rule_count > 0 ? rule_count : 1];
+        bool fired[effect_count > 0 ? effect_count : 1];
+        double results[effect_count > 0 ? effect_count : 1];
 
-    bool matched[rule_count > 0 ? rule_count : 1];
-    bool fired[effect_count > 0 ? effect_count : 1];
-    double results[effect_count > 0 ? effect_count : 1];
-
-    for (size_t i = 0; i < rule_count; ++i)
-    {
-        const rbs_rule_t rule = &rules[i];
-        matched[i] = true;
-
-        for (rbs_term_t term = rule->if_terms; !(term->fact_enum == 0 && !term->comparison); ++term)
+        for (size_t i = 0; i < rule_count; ++i)
         {
-            if (!rbs_term_is_true(rbs, term))
+            const rbs_rule_t rule = &rules[i];
+            matched[i] = true;
+
+            for (rbs_term_t term = rule->if_terms; !(term->fact_enum == 0 && !term->comparison); ++term)
             {
-                matched[i] = false;
-                break;
-            }
-        }
-    }
-
-    for (size_t i = 0; i < effect_count; ++i)
-    {
-        const rbs_effect_t effect = &effects[i];
-        fired[i] = rbs_is_fact(rbs->facts, rbs->token_count, effect->trigger_fact_enum);
-        results[i] = 0.0;
-
-        if (!fired[i] || effect->value_enum < 0 || (uint32_t) effect->value_enum >= rbs->value_count)
-        {
-            fired[i] = false;
-            continue;
-        }
-
-        double result = rbs->memory[(size_t) effect->value_enum];
-        switch (effect->op)
-        {
-            case ADD: result += effect->operand; break;
-            case SUB: result -= effect->operand; break;
-            case MUL: result *= effect->operand; break;
-            case DIV:
-                if (effect->operand == 0.0)
+                if (!rbs_term_is_true(rbs, term))
                 {
-                    fired[i] = false;
-                    continue;
+                    matched[i] = false;
+                    break;
                 }
-                result /= effect->operand;
-                break;
-            default: break;
+            }
         }
-        results[i] = result;
-    }
 
-    int32_t changed_facts[256];
-    size_t changed_count = 0;
+        for (size_t i = 0; i < effect_count; ++i)
+        {
+            const rbs_effect_t effect = &effects[i];
+            fired[i] = rbs_is_fact(rbs->facts, rbs->token_count, effect->trigger_fact_enum);
+            results[i] = 0.0;
 
-    for (size_t i = 0; i < rule_count; ++i)
-    {
-        if (matched[i])
-        {
-            for (const int32_t* fact = rules[i].then_facts; *fact != 0; ++fact)
+            if (!fired[i] || effect->value_enum < 0 || (uint32_t) effect->value_enum >= rbs->value_count)
             {
-                set_fact_if_changed(rbs->facts, rbs->token_count, *fact, changed_facts, &changed_count);
+                fired[i] = false;
+                continue;
             }
-        }
-        else if (rules[i].else_facts != NULL)
-        {
-            for (const int32_t* fact = rules[i].else_facts; *fact != 0; ++fact)
-            {
-                set_fact_if_changed(rbs->facts, rbs->token_count, *fact, changed_facts, &changed_count);
-            }
-        }
-    }
 
-    for (size_t i = 0; i < effect_count; ++i)
-    {
-        if (!fired[i])
-        {
-            continue;
+            double result = rbs->memory[(size_t) effect->value_enum];
+            switch (effect->op)
+            {
+                case ADD: result += effect->operand; break;
+                case SUB: result -= effect->operand; break;
+                case MUL: result *= effect->operand; break;
+                case DIV:
+                    if (effect->operand == 0.0)
+                    {
+                        fired[i] = false;
+                        continue;
+                    }
+                    result /= effect->operand;
+                    break;
+                default: break;
+            }
+            results[i] = result;
         }
-        rbs->memory[(size_t) effects[i].value_enum] = results[i];
-    }
 
-    {
-        char buf[512];
-        int pos = snprintf(buf, sizeof(buf), "rbs_step end");
-        for (size_t i = 0; i < changed_count; ++i)
+        int32_t changed_facts[256];
+        size_t changed_count = 0;
+
+        for (size_t i = 0; i < rule_count; ++i)
         {
-            int32_t f = changed_facts[i];
-            const char* name = NULL;
-            uint32_t magnitude = f < 0 ? (uint32_t)-f : (uint32_t)f;
-            if (rbs && rbs->fact_names && rbs->fact_names_count > 0 &&
-                magnitude > 0 && magnitude <= rbs->fact_names_count)
+            if (matched[i])
             {
-                name = rbs->fact_names[magnitude - 1];
+                for (const int32_t* fact = rules[i].then_facts; *fact != 0; ++fact)
+                {
+                    set_fact_if_changed(rbs->facts, rbs->token_count, *fact, changed_facts, &changed_count);
+                }
             }
-            if (name && name[0] != '\0')
+            else if (rules[i].else_facts != NULL)
             {
-                pos += snprintf(buf + pos, sizeof(buf) - pos, " %s", name);
-            }
-            else
-            {
-                pos += snprintf(buf + pos, sizeof(buf) - pos, " %d", f);
+                for (const int32_t* fact = rules[i].else_facts; *fact != 0; ++fact)
+                {
+                    set_fact_if_changed(rbs->facts, rbs->token_count, *fact, changed_facts, &changed_count);
+                }
             }
         }
-        logging_log_message(buf);
+
+        for (size_t i = 0; i < effect_count; ++i)
+        {
+            if (!fired[i])
+            {
+                continue;
+            }
+            rbs->memory[(size_t) effects[i].value_enum] = results[i];
+        }
+
+        {
+            char buf[512];
+            int pos = snprintf(buf, sizeof(buf), "rbs_step end");
+            for (size_t i = 0; i < changed_count; ++i)
+            {
+                int32_t f = changed_facts[i];
+                const char* name = NULL;
+                uint32_t magnitude = f < 0 ? (uint32_t)-f : (uint32_t)f;
+                if (rbs && rbs->fact_names && rbs->fact_names_count > 0 &&
+                    magnitude > 0 && magnitude <= rbs->fact_names_count)
+                {
+                    name = rbs->fact_names[magnitude - 1];
+                }
+                if (name && name[0] != '\0')
+                {
+                    pos += snprintf(buf + pos, sizeof(buf) - pos, " %s", name);
+                }
+                else
+                {
+                    pos += snprintf(buf + pos, sizeof(buf) - pos, " %d", f);
+                }
+            }
+            logging_log_message(buf);
+        }
     }
 }
