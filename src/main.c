@@ -1,7 +1,6 @@
 #include "rbs.h"
 #include "rbs_sm.h"
 
-#include <stdio.h>
 #include <logging/logging.h>
 
 typedef enum token
