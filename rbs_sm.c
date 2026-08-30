@@ -21,6 +21,14 @@ bool _rbs_sm_entry(sm_state_t current, void* user_data)
 	return rbs_sm_advance((rbs_sm_t) user_data, current);
 }
 
+/* Schritt-Callback: leere weak-Definition fuer den Linker, tut nichts,
+ * solange die Anwendung keinen starken `callback`-Override definiert. */
+__attribute__((weak)) void rbs_on_step(rbs_sm_t fsm, uint32_t tick)
+{
+	(void) fsm;
+	(void) tick;
+}
+
 bool rbs_sm_advance(rbs_sm_t fsm, sm_state_t current)
 {
 	bool ok = (fsm != NULL) && (current != NULL) && (fsm->rbs != NULL);
@@ -34,10 +42,7 @@ bool rbs_sm_advance(rbs_sm_t fsm, sm_state_t current)
 		         fsm->effects, fsm->effect_count);
 		fsm->ticks++;
 
-		if (fsm->on_step != NULL)
-		{
-			fsm->on_step(fsm, fsm->ticks);
-		}
+		rbs_on_step(fsm, fsm->ticks);
 
 		/* Aktiven Zustand ueber die Faktenbasis ermitteln und umschalten. */
 		for (size_t i = 0; i < fsm->slot_count && !found; ++i)

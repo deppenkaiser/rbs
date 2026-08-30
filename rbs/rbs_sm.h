@@ -22,11 +22,15 @@ typedef struct rbs_sm
 	size_t effect_count;
 	rbs_sm_slot_t slots;
 	size_t slot_count;
-	/* Optional: wird nach jedem Schritt mit der Schrittnummer aufgerufen
-	 * (z. B. um die Step-Grenze in der Konsole zu markieren). */
-	void (*on_step)(struct rbs_sm* fsm, uint32_t tick);
 	uint32_t ticks;
 }* rbs_sm_t;
+
+/* Schritt-Callback im api-Muster: wird nach jedem Schritt mit der
+ * Schrittnummer aufgerufen (z. B. um die Step-Grenze in der Konsole zu
+ * markieren). rbs legt in rbs_sm.c eine leere weak-Definition an; die
+ * Anwendung ueberschreibt sie bei Bedarf mit einer starken `callback`-
+ * Definition. */
+callback_declaration(void, rbs_on_step(rbs_sm_t fsm, uint32_t tick));
 
 void rbs_sm_init(rbs_sm_t fsm, struct rbs* rbs,
                  const rbs_rule_t rules, size_t rule_count,

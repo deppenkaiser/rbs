@@ -34,7 +34,7 @@ Ein Programm in diesem Muster ist damit selbst das Modell seiner Zustände und
 | Schicht | Bibliothek | Aufgabe |
 |---|---|---|
 | `rbs` | diese Engine | Faktenbasis, Memory, Regeln (Guards → then/else-Fakten), Effekte (Memory-Ops) |
-| `rbs_sm` | hier enthalten | RBS-Schritte + Routing des ersten aktiven Slots auf Handler; `on_step`-Schritt-Callback |
+| `rbs_sm` | hier enthalten | RBS-Schritte + Routing des ersten aktiven Slots auf Handler; `rbs_on_step`-Schritt-Callback |
 | `sm` | `libraries/sm` | minimal-threaded State-Machine (Handler-Schleife) |
 | `threading` | `libraries/threading` | Thread-Erzeugung/-Joining für `sm` |
 
@@ -44,21 +44,21 @@ Die App-State-Machine kennt drei Phasen. Der **Konstruktor** und der
 **Destruktor** sind die sm-Lebenszyklus-Callbacks `sm_on_start`/`sm_on_stop`
 (weak, kommen aus der `api`-Muster-Bibliothek) und laufen im Worker-Thread
 ganz am Anfang bzw. Ende; dazwischen läuft die Zustandsschleife. Der
-`on_step`-Slot ist ein Schritt-Callback im `struct rbs_sm`.
+`rbs_on_step`-Callback (api-Muster) wird nach jedem Schritt aufgerufen.
 
 | Schicht | Phase | Aufgabe |
 |---|---|---|
 | `sm_on_start` | **Konstruktor** | läuft genau einmal vor der Zustandsschleife, legt Ressourcen (z. B. die rbs-Buffer) an und baut die **initiale Welt** auf |
-| `on_step` | Schritt-Callback | wird je Schritt mit der Schrittnummer aufgerufen (z. B. Step-Grenze in der Konsole) |
+| `rbs_on_step` | Schritt-Callback | api-Muster, wird je Schritt mit der Schrittnummer aufgerufen (z. B. Step-Grenze in der Konsole) |
 | `sm_on_stop` | **Destruktor** | läuft genau einmal nach Terminierung der Schleife, bilanziert Endfakten und gibt Ressourcen frei |
 
 ```c
 callback void sm_on_start(sm_core_t core) { /* Ressourcen + Welt aufbauen */ }
 callback void sm_on_stop(sm_core_t core)  { /* Endfakten bilanzieren, Ressourcen freigeben */ }
+callback void rbs_on_step(rbs_sm_t fsm, uint32_t tick) { /* Step-Grenze in der Konsole */ }
 
 struct rbs_sm fsm = {
     .slots = slots, .slot_count = ...,
-    .on_step = _app_on_step,
 };
 rbs_sm_run(&fsm);
 ```
