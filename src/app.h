@@ -15,7 +15,7 @@
  * Dieses Modul bündelt alles, was die App *ausmacht* — die Tokens (Fakten)
  * und Values (Memory), ihre Namen, sowie die Regel-/Effekt-/Slot-Tabellen.
  * Die Handler (Lebenszyklus + externe Faktenquellen) werden nur als
- * Prototypen deklariert und sind in main.c implementiert.
+ * Prototypen deklariert und sind in app.c implementiert.
  *
  * Die Tabellen sind per `static` inkludiert: jede Übersetzungseinheit, die
  * app.h einbindet, erhält ihre eigene Kopie der (konstanten) Programme.
@@ -65,7 +65,7 @@ typedef enum value
 	VALUE_COUNT
 }* value_t;
 
-/* --- Handler-Prototypen (Implementierung in main.c) --- */
+/* --- Handler-Prototypen (Implementierung in app.c) --- */
 
 /* Externe Faktenquelle (z. B. Wettersensor): meldet das Ende des Regens. */
 bool app_handle_wet(sm_state_t next_state, void* user_data);
@@ -75,7 +75,7 @@ bool app_handle_adult(sm_state_t next_state, void* user_data);
 void app_on_step(rbs_sm_t fsm, uint32_t tick);
 
 /* Der Konstruktor/Destruktor der App-FSM ist der sm-Lebenszyklus-Callback
- * (sm_on_start/sm_on_stop), deklariert in <sm/sm.h> und in main.c als
+ * (sm_on_start/sm_on_stop), deklariert in <sm/sm.h> und in app.c als
  * `callback` ueberschrieben. Dort laeuft er im Worker-Thread ganz am Anfang
  * (z. B. Speicherverwaltung/Ressourcen) bzw. ganz am Ende. */
 

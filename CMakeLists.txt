@@ -19,6 +19,7 @@ add_subdirectory(../../libraries/api ${CMAKE_BINARY_DIR}/api)
 
 target_sources(rbs PRIVATE
 	src/main.c
+	src/app.c
 	src/rbs.c
 	src/rbs_sm.c
 )
