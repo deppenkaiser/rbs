@@ -220,13 +220,19 @@ void rbs_step(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count,
 
     for (size_t i = 0; i < rule_count; ++i)
     {
-        if (!matched[i])
+        if (matched[i])
         {
-            continue;
+            for (const int32_t* fact = rules[i].then_facts; *fact != 0; ++fact)
+            {
+                set_fact_if_changed(rbs->facts, rbs->token_count, *fact, changed_facts, &changed_count);
+            }
         }
-        for (const int32_t* fact = rules[i].then_facts; *fact != 0; ++fact)
+        else if (rules[i].else_facts != NULL)
         {
-            set_fact_if_changed(rbs->facts, rbs->token_count, *fact, changed_facts, &changed_count);
+            for (const int32_t* fact = rules[i].else_facts; *fact != 0; ++fact)
+            {
+                set_fact_if_changed(rbs->facts, rbs->token_count, *fact, changed_facts, &changed_count);
+            }
         }
     }
 
@@ -237,8 +243,6 @@ void rbs_step(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count,
             continue;
         }
         rbs->memory[(size_t) effects[i].value_enum] = results[i];
-        int32_t inv = rbs_invert_token(effects[i].trigger_fact_enum);
-        set_fact_if_changed(rbs->facts, rbs->token_count, inv, changed_facts, &changed_count);
     }
 
     {
@@ -249,7 +253,8 @@ void rbs_step(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count,
             int32_t f = changed_facts[i];
             const char* name = NULL;
             uint32_t magnitude = f < 0 ? (uint32_t)-f : (uint32_t)f;
-            if (rbs && rbs->fact_names && magnitude > 0 && magnitude <= rbs->token_count)
+            if (rbs && rbs->fact_names && rbs->fact_names_count > 0 &&
+                magnitude > 0 && magnitude <= rbs->fact_names_count)
             {
                 name = rbs->fact_names[magnitude - 1];
             }

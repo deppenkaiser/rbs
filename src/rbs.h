@@ -4,8 +4,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-typedef enum token *token_t;
-
 typedef enum operation
 {
 	NONE = 0,
@@ -40,12 +38,16 @@ typedef struct rbs
 	memory_t memory;
 	uint32_t value_count;
 	const char** fact_names;
+	/* Laenge von fact_names in Eintraegen; 0 = keine Namen. Werte mit
+	 * Magnitude > fact_names_count werden nicht benannt (kein OOB). */
+	uint32_t fact_names_count;
 }* rbs_t;
 
 typedef struct rbs_rule
 {
 	rbs_term_t if_terms;
 	int32_t* then_facts;
+	int32_t* else_facts;
 }* rbs_rule_t;
 
 typedef struct rbs_effect
@@ -71,6 +73,13 @@ bool rbs_term_is_true(struct rbs* rbs, rbs_term_t term);
  * Faktenbasis (und denselben Speicherstand) aus. Abgeleitete Fakten und
  * Aenderungen werden erst am Ende des Schritts committed und wirken damit
  * erst im naechsten Schritt sichtbar — keine Regel sieht im laufenden
- * Schritt das Ergebnis einer anderen Regel. */
+ * Schritt das Ergebnis einer anderen Regel.
+ *
+ * Fakten persistieren, bis sie explizit zurueckgesetzt werden: Effekte
+ * FEUERN den Trigger Fakt, sobald er aktiv ist, und lassen ihn aktiv
+ * (zustandsgetriggert, kein Auto-Konsum). Ein Reset erfolgt ueber eine
+ * negierte Fakten-Form (N_X) in einem then_/else_facts-Zweig oder per
+ * rbs_set_fact. Regeln mit else_facts setzen bei nicht zutreffendem
+ * if-Zweig die else-Fakten (typisch der rueckwaertige Reset). */
 void rbs_step(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count,
               const rbs_effect_t effects, size_t effect_count);

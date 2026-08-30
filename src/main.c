@@ -1,103 +1,73 @@
-#include "rbs.h"
-#include "rbs_sm.h"
+#include <stdio.h>
 
+#include <sm/sm.h>
 #include <logging/logging.h>
 
-typedef enum token
-{
-	N_PAY = -7,
-	N_ADULT = -6,
-	N_UMBRELLA = -5,
-	N_WET = -4,
-	N_CLOUDY = -3,
-	N_RAIN = -2,
-	N_START = -1,
-	ZERO = 0,
-	START = 1,
-	RAIN = 2,
-	CLOUDY = 3,
-	WET = 4,
-	UMBRELLA = 5,
-	ADULT = 6,
-	PAY = 7,
-	TOKEN_COUNT
-}* token_t;
+#include "app.h"
 
-static const char* token_names[] = { "START", "RAIN", "CLOUDY", "WET", "UMBRELLA", "ADULT", "PAY" };
+/* --- Handler-Implementierung (Programmlogik der App) --- */
 
-typedef enum value
-{
-	AGE,
-	MONEY,
-	VALUE_COUNT
-}* value_t;
-
-struct rbs_term if_weather[] =
-{
-	{ .comparison = false, .fact_enum = RAIN },
-	{ .comparison = false, .fact_enum = CLOUDY },
-	{ .comparison = false, .fact_enum = ZERO }
-};
-enum token then_weather[] = { WET, ZERO };
-
-struct rbs_term if_wet[] =
-{
-	{ .comparison = false, .fact_enum = WET },
-	{ .comparison = false, .fact_enum = ZERO }
-};
-enum token then_wet[] = { UMBRELLA, ZERO };
-
-struct rbs_term if_adult[] =
-{
-	{ .comparison = true, .value_enum = AGE, .op = GT, .operand = 18 },
-	{ .comparison = false, .fact_enum = ZERO }
-};
-enum token then_adult[] = { ADULT, PAY, ZERO };
-
-struct rbs_rule rules[] =
-{
-	{ if_weather, then_weather },
-	{ if_wet, then_wet },
-	{ if_adult, then_adult }
-};
-
-struct rbs_effect effects[] =
-{
-	{ .trigger_fact_enum = PAY, .value_enum = MONEY, .op = SUB, .operand = 10 }
-};
-
-static bool _app_handle_wet(sm_state_t next_state, void* user_data)
+/* Externe Faktenquelle (z. B. Wettersensor / Systemzeit): meldet das Ende
+ * des Regens, indem RAIN und CLOUDY negiert werden. Das ist bewusster
+ * externer Input — kein Konsum; die Regeln ziehen daraus selbst nach. */
+bool app_handle_wet(sm_state_t next_state, void* user_data)
 {
 	rbs_sm_t fsm = (rbs_sm_t) user_data;
 
-	/* Konsumieren: Regen stoppen und WET-Fakt loeschen, sonst re-feriert die
-	 * Wetterregel WET im naechsten Tick und die Schleife haengt hier. */
+	logging_log_message("wetter: regen klaert auf");
 	rbs_set_fact(fsm->rbs->facts, fsm->rbs->token_count, rbs_invert_token(RAIN));
-	rbs_set_fact(fsm->rbs->facts, fsm->rbs->token_count, rbs_invert_token(WET));
+	rbs_set_fact(fsm->rbs->facts, fsm->rbs->token_count, rbs_invert_token(CLOUDY));
 
 	return rbs_sm_advance(fsm, next_state);
 }
 
-static void _app_on_step(rbs_sm_t fsm, uint32_t tick)
+/* Schritt-Callback: liefert je Schritt eine Zeile (Step-Grenze/Status). */
+void app_on_step(rbs_sm_t fsm, uint32_t tick)
 {
-	(void) fsm;
+	rbs_t rbs = fsm->rbs;
+	char buf[128];
 	(void) tick;
+	int pos = snprintf(buf, sizeof(buf), "step %u | UMBRELLA:", (unsigned) tick);
+	pos += snprintf(buf + pos, sizeof(buf) - pos, " %s | MONEY:",
+	                rbs_is_fact(rbs->facts, rbs->token_count, UMBRELLA) ? "true" : "false");
+	snprintf(buf + pos, sizeof(buf) - pos, " %.0f", rbs->memory[MONEY]);
+	logging_log_message(buf);
 }
 
-static bool _app_handle_adult(sm_state_t next_state, void* user_data)
+/* App-Ende: keine weiteren externen Ereignisse mehr -> FSM beenden. */
+bool app_handle_adult(sm_state_t next_state, void* user_data)
 {
 	rbs_sm_t fsm = (rbs_sm_t) user_data;
 	(void) fsm;
+	(void) next_state;
 
-	/* Endzustand: FSM beenden. */
 	return false;
 }
 
-struct rbs_sm_slot slots[] =
+/* Konstruktor: laeuft genau einmal vor der Zustandsschleife und baut die
+ * initiale Welt auf — hier: die externe Ausgangslage (es regnet und ist
+ * bewoelkt). Danach uebernimmt die Regel-Engine. */
+bool app_start(sm_state_t next_state, void* user_data)
 {
-	{ .fact = WET,   .handler = _app_handle_wet },
-	{ .fact = ADULT, .handler = _app_handle_adult },
-};
+	rbs_sm_t fsm = (rbs_sm_t) user_data;
+	(void) next_state;
+
+	logging_log_message("app: fsm startet (wetter: es regnet und ist bewoelkt)");
+	rbs_set_fact(fsm->rbs->facts, fsm->rbs->token_count, RAIN);
+	rbs_set_fact(fsm->rbs->facts, fsm->rbs->token_count, CLOUDY);
+	return true;
+}
+
+/* Destruktor: laeuft genau einmal, nachdem die Schleife terminiert ist. */
+bool app_stop(sm_state_t next_state, void* user_data)
+{
+	rbs_sm_t fsm = (rbs_sm_t) user_data;
+	(void) next_state;
+	logging_log_message(rbs_is_fact(fsm->rbs->facts, fsm->rbs->token_count, UMBRELLA) ?
+	                    "app: UMBRELLA ist gesetzt (fsm beendet)" :
+	                    "app: UMBRELLA NICHT gesetzt");
+	return true;
+}
 
 int main()
 {
@@ -108,7 +78,8 @@ int main()
 		.token_count = TOKEN_COUNT,
 		.memory = rbs_create_memory_buffer(VALUE_COUNT),
 		.value_count = VALUE_COUNT,
-		.fact_names = token_names
+		.fact_names = token_names,
+		.fact_names_count = sizeof(token_names) / sizeof(token_names[0])
 	};
 
 	rbs_initialize_facts(rbs.facts, TOKEN_COUNT);
@@ -117,19 +88,21 @@ int main()
 	rbs.memory[AGE] = 20;
 	rbs.memory[MONEY] = 100;
 
-	rbs_set_fact(rbs.facts, rbs.token_count, RAIN);
-	rbs_set_fact(rbs.facts, rbs.token_count, CLOUDY);
+	/* Die initiale Welt (Regen + Bewoelkung) baut der start_handler auf.
+	 * AGE/MONEY sind Konstanten der Sim-Welt und bleiben hier. */
 
 	struct rbs_sm fsm =
 	{
 		.rbs = &rbs,
-		.rules = rules,
-		.rule_count = sizeof(rules) / sizeof(rules[0]),
-		.effects = effects,
-		.effect_count = sizeof(effects) / sizeof(effects[0]),
-		.slots = slots,
-		.slot_count = sizeof(slots) / sizeof(slots[0]),
-		.on_step = _app_on_step,
+		.rules = app_rules,
+		.rule_count = sizeof(app_rules) / sizeof(app_rules[0]),
+		.effects = app_effects,
+		.effect_count = sizeof(app_effects) / sizeof(app_effects[0]),
+		.slots = app_slots,
+		.slot_count = sizeof(app_slots) / sizeof(app_slots[0]),
+		.on_step = app_on_step,
+		.start_handler = app_start,
+		.stop_handler = app_stop,
 	};
 
 	rbs_sm_run(&fsm);

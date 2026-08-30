@@ -69,7 +69,7 @@ target_link_libraries(rbs_effects_test PRIVATE logging)
 
 add_test(NAME rbs_effects_test COMMAND rbs_effects_test)
 
-# --- Test für die rbs_sm-State-Machine (Marker-Routing + Konsumieren) ---
+# --- Test für die rbs_sm-State-Machine (Marker-Routing + externer Fakt-Reset) ---
 add_executable(rbs_sm_test)
 
 target_sources(rbs_sm_test PRIVATE
@@ -92,5 +92,22 @@ target_link_libraries(rbs_sm_test
 )
 
 add_test(NAME rbs_sm_test COMMAND rbs_sm_test)
+
+# --- Test für die else-Zweige (rbs_rule.else_facts + Persistenz) ---
+add_executable(rbs_else_test)
+
+target_sources(rbs_else_test PRIVATE
+	test/test_else.c
+	src/rbs.c
+)
+
+target_include_directories(rbs_else_test PRIVATE
+	src
+	../../libraries
+)
+
+target_link_libraries(rbs_else_test PRIVATE logging)
+
+add_test(NAME rbs_else_test COMMAND rbs_else_test)
 
 

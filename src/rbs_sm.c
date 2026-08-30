@@ -61,5 +61,18 @@ void rbs_sm_run(rbs_sm_t fsm)
 	}
 
 	struct sm_state init = {.state_function = _rbs_sm_entry};
+
+	/* Konstruktor: genau einmal vor der Zustandsschleife. */
+	if (fsm->start_handler != NULL)
+	{
+		fsm->start_handler(&init, fsm);
+	}
+
 	sm_run(&init, fsm);
+
+	/* Destruktor: genau einmal nach Terminierung der Schleife. */
+	if (fsm->stop_handler != NULL)
+	{
+		fsm->stop_handler(&init, fsm);
+	}
 }

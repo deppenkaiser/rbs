@@ -1,8 +1,8 @@
 /* rbs_effects_test.c — Regressions-Test fuer Schritt-Effekte (rbs_step).
- * Validiert: alle Effekte eines gemeinsamen Triggers feuern, Trigger wird
- * genau einmal invertiert, Ergebnisse stammen vom unveraenderten Basis-Stand
- * (Snapshots, keine Sequenz-Kette), und nach dem Konsumieren feuert nichts
- * mehr.
+ * Validiert: alle Effekte eines gemeinsamen Triggers feuern, Ergebnisse
+ * stammen vom unveraenderten Basis-Stand (Snapshots, keine Sequenz-Kette),
+ * und der Trigger BLEIBT aktiv — Effekte feuern zustandsgetriggert in
+ * jedem Schritt, bis der Trigger explizit zurueckgesetzt wird.
  * Stil: assert-basiert, kein externes Framework.
  */
 #include "rbs.h"
@@ -37,7 +37,7 @@ int main(void) {
 
     /* Ein Schritt: alle Effekte rechnen vom unveraenderten Basis-Stand
      * (M2: einmal 10*2=20 und einmal 10*3=30, zuletzt geschrieben -> 30),
-     * der gemeinsame Trigger wird genau einmal invertiert (N_T1). */
+     * der Trigger bleibt aktiv (kein Auto-Konsum). */
     rbs_step(&r, NULL, 0, effects, 5);
 
     assert(mem[M0] == 15.0);
@@ -45,15 +45,24 @@ int main(void) {
     assert(mem[M2] == 30.0);
     assert(mem[M3] == 2.5);
 
-    assert(!rbs_is_fact(facts, TN, T1));
-    assert(rbs_is_fact(facts, TN, N_T1));
+    assert(rbs_is_fact(facts, TN, T1));
+    assert(!rbs_is_fact(facts, TN, N_T1));
 
-    /* Nach dem Konsumieren feuert im naechsten Schritt kein Effekt mehr. */
+    /* Naechster Schritt: Trigger ist noch aktiv -> Effekte feuern erneut,
+     * wieder vom unveraenderten Basis-Stand (M2: 30 -> 30*2 und 30*3). */
     rbs_step(&r, NULL, 0, effects, 5);
-    assert(mem[M0] == 15.0);
-    assert(mem[M1] == 7.0);
-    assert(mem[M2] == 30.0);
-    assert(mem[M3] == 2.5);
+    assert(mem[M0] == 20.0);
+    assert(mem[M1] == 4.0);
+    assert(mem[M2] == 90.0);
+    assert(mem[M3] == 0.625);
+
+    /* Expliziter Reset: Trigger zuruecksetzen -> Effekte feuern nicht mehr. */
+    rbs_set_fact(facts, TN, N_T1);
+    rbs_step(&r, NULL, 0, effects, 5);
+    assert(mem[M0] == 20.0);
+    assert(mem[M1] == 4.0);
+    assert(mem[M2] == 90.0);
+    assert(mem[M3] == 0.625);
 
     rbs_destroy_memory_buffer(&mem);
     rbs_destroy_facts_buffer(&facts);

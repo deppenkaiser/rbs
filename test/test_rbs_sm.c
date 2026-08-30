@@ -1,9 +1,9 @@
 /* rbs_sm_test.c — Regressionstest für die rbs_sm-State-Machine.
  * Validiert die Schritt-Semantik: eine Regel sieht im laufenden Schritt
  * nicht, was eine andere Regel im selben Schritt ableitet (neue Fakten
- * wirken erst im naechsten Schritt), Marker-Routing auf die Handler, das
- * Konsumieren als Fortschrittsmechanik und den Abbruch beim Endzustand
- * (Handler liefert false).
+ * wirken erst im naechsten Schritt), Marker-Routing auf die Handler, den
+ * expliziten Fakt-Reset als Fortschrittsmechanik und den Abbruch beim
+ * Endzustand (Handler liefert false).
  * Stil: assert-basiert, kein externes Framework.
  */
 #include "rbs.h"
@@ -72,8 +72,9 @@ static bool _sm_handle_wet(sm_state_t next_state, void* user_data)
 	 * wenn PAY aktiv ist. Deshalb ist MONEY hier noch 100. */
 	assert(fsm->rbs->memory[MONEY] == 100.0);
 
-	/* Konsumieren: ohne das Loeschen re-feriert RAIN->WET im naechsten
-	 * Schritt und die Schleife haengt dauerhaft am WET-Marker. */
+	/* Fakten persistieren bis zum expliziten Reset: der Handler klaert den
+	 * Regen auf (RAIN/WET), sonst re-feriert RAIN->WET im naechsten Schritt
+	 * und die Schleife haengt dauerhaft am WET-Marker. */
 	rbs_set_fact(fsm->rbs->facts, fsm->rbs->token_count, rbs_invert_token(RAIN));
 	rbs_set_fact(fsm->rbs->facts, fsm->rbs->token_count, rbs_invert_token(WET));
 
@@ -87,6 +88,10 @@ static bool _sm_handle_adult(sm_state_t next_state, void* user_data)
 	calls_adult++;
 
 	assert(fsm->rbs->memory[MONEY] == 90.0);
+
+	/* Einmal bezahlt: PAY explizit zuruecksetzen, damit der Effekt nicht in
+	 * jedem weiteren Schritt erneut abzieht. Dann Endzustand. */
+	rbs_set_fact(fsm->rbs->facts, fsm->rbs->token_count, rbs_invert_token(PAY));
 	return false; /* Endzustand */
 }
 
@@ -122,9 +127,10 @@ int main(void)
 
 	/* Schritt 1: RAIN->WET und AGE>18->ADULT+PAY werden ABGELEITET
 	 * (sichtbar ab Schritt 2), der Effekt zahlt noch nicht (MONEY 100).
-	 * Router: WET -> Handler, konsumiert RAIN+WET.
-	 * Schritt 2: PAY ist aktiv -> Effekt zahlt 100 -> 90. Router: ADULT
-	 * -> Endzustand. */
+	 * Router: WET -> Handler, setzt RAIN+WET explizit zurueck.
+	 * Schritt 2: WET persistiert -> bleibt Router; PAY ist aktiv -> Effekt
+	 * zahlt 100 -> 90. Router: ADULT -> Handler setzt PAY zurueck und
+	 * beendet. */
 	assert(fsm.ticks == 2);
 	assert(calls_wet == 1);
 	assert(calls_adult == 1);
