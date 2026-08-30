@@ -15,6 +15,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 add_executable(rbs)
 add_subdirectory(../../libraries/sm ${CMAKE_BINARY_DIR}/sm)
 add_subdirectory(../../libraries/logging ${CMAKE_BINARY_DIR}/logging)
+add_subdirectory(../../libraries/api ${CMAKE_BINARY_DIR}/api)
 
 target_sources(rbs PRIVATE
 	src/main.c
@@ -29,6 +30,7 @@ target_include_directories(rbs PRIVATE
 target_link_libraries(rbs
 	PUBLIC
 		m
+		api
 		sm
 		logging
 )
