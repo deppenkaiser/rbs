@@ -1,5 +1,8 @@
 #include <logging/logging.h>
 #include <stdint.h>
+
+#define MODULE_ID "RBS"
+
 #include <stdlib.h>
 #include <memory.h>
 #include <stdio.h>
@@ -95,7 +98,7 @@ void rbs_set_fact_named(struct rbs* rbs, int32_t fact)
         }
         snprintf(buf + pos, sizeof(buf) - pos, " (%s)",
                  fact > 0 ? "aktiv" : "negiert");
-        logging_log_message(buf);
+        LOG(MODULE_ID, buf);
     }
 }
 
@@ -311,5 +314,5 @@ static void step_log(struct rbs* rbs, const int32_t* changed_facts, size_t chang
             pos += snprintf(buf + pos, sizeof(buf) - pos, " %d", f);
         }
     }
-    logging_log_message(buf);
+    LOG(MODULE_ID, buf);
 }
