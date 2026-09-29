@@ -16,9 +16,9 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 add_library(rbs STATIC)
-add_subdirectory(../sm ${CMAKE_BINARY_DIR}/sm_from_rbs)
-add_subdirectory(../logging ${CMAKE_BINARY_DIR}/logging_from_rbs)
-add_subdirectory(../api ${CMAKE_BINARY_DIR}/api_from_rbs)
+add_subdirectory(../sm ${CMAKE_BINARY_DIR}/libs_build/sm_from_rbs)
+add_subdirectory(../logging ${CMAKE_BINARY_DIR}/libs_build/logging_from_rbs)
+add_subdirectory(../api ${CMAKE_BINARY_DIR}/libs_build/api_from_rbs)
 
 target_sources(rbs PRIVATE
 	rbs.c
