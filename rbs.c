@@ -191,7 +191,12 @@ void rbs_step(struct rbs* rbs, const rbs_rule_t rules, size_t rule_count,
         step_evaluate_effects(rbs, effects, effect_count, fired, results);
         size_t changed_count = step_apply_facts(rbs, rules, rule_count, matched, changed_facts);
         step_apply_effects(rbs, effects, effect_count, fired, results);
-        step_log(rbs, changed_facts, changed_count);
+        // Nur bei Zustandswechsel protokollieren: hat der Schritt keinen Fakt umgelegt, ist er
+        // stumm (sonst eine Zeile je Takt).
+        if (changed_count > 0)
+        {
+            step_log(rbs, changed_facts, changed_count);
+        }
     }
 }
 
